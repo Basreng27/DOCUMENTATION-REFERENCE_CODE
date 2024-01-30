@@ -1,0 +1,7 @@
+<h1 v-once> => v-once = membuat data tidak bisa dirubah melalui DOM
+<p v-text="pesan"></p> = memanggil isi variable tanpa menggunakan {{  }} 
+<p v-html="pesan"></p> = memanggil isi variable tanpa menggunakan {{  }} dengan isinya bisa format html
+<img v-bind:src="gambar" alt=""> = Untuk path gambar
+<input type="text" name="" v-model="nama"> = data pada variable nama juga ikt berubah seperti update
+<button v-on:click="nilai++">CLICK</button> = ketika di click
+nama.toUpperCase() = membuat tulisan menjadi besar semua

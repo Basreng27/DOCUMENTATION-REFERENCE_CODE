@@ -1,0 +1,31 @@
+1. deklarasi variable di js dibagi menjadi 3 yaitu :
+var, let, const
+var adalah variable yang isinya dapat berubah, let adalah variable yang hanya bisa dilakukan 1 kali, const adalah variable yang bersipat tetap yaitu isinya tetap tidak akan berubah-ubah.
+
+2. js menggunakan oprator aritmatika seperti ini :
++ untuk penjumlahan
+- untuk pengurangan
+* untuk perkalian
+/ untuk pembagian
+i++ untuk increment penambahan 1
+i-- untuk decrement pengurangan 1
+% untuk menghasilkan sisa bagi
++= untuk menambahkan dengan dirinya sendiri
+-= untuk mengurangi dengan dirinya sendiri
+*= untuk mengalikan dengan dirinya sendiri
+/= untuk membagi dengan dirinya sendiri
+
+3. untuk tetap membaca "" dalam "" menggunakan \"\"
+
+4. escape sequence in string
+Code	Output
+\'	single quote
+\"	double quote
+\\	backslash
+\n	newline
+\t	tab
+\r	carriage return
+\b	backspace
+\f	form feed
+
+basic-javascript/concatenating-strings-with-plus-operator

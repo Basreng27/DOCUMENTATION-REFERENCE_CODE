@@ -1,0 +1,125 @@
+-> Create Project Laravel (CMD)
+composer create-project laravel/laravel=version nama-folder
+
+-> melihat perintah apa saja di artisan
+php artisan
+
+-> menjalankan dalam mode dev
+php artisan serve
+
+-> melihat detail perintah artisan
+php artisan <perintah> --help
+
+-> membuat integration test (test semua dengan load framework)
+php artisan make:test NamaTest
+
+-> membuat unit test
+php artisan make:test NamaTest --unit
+
+-> menjalankan test
+php artisan test test/Feature/<nama_file>.php
+
+-> configuration cache (untuk membuat file cache dengan menggabungkan semua file yang ada di folder config)
+-> lokasi config cache app/bootsrap/cache
+php artisan config:cache
+
+-> menghapus cache (jika tidak digunakan)
+php artisan config:clear
+
+-> membuat service provider
+php artisan make:provider NamaProvider
+
+-> menghapus cache services
+php artisan clear-compiled
+
+-> melihat semua route
+php artisan route:list
+
+-> compiling view (digunaakan di production)
+php artisan view:cache
+
+-> menghapus hasil compiling view
+php artisan view:clear
+
+-> membuat controller
+php artisan make:controller NamaController
+
+-> membuat berjalan di port berbeda
+php artisan serve --port=8000
+
+-> membuat link storage menjadi ke public/storage
+php artisan storage:link
+
+-> membuat key (otomatis mengisi key APP_KEY di .env (Biasanya diapakai pada cookie, dll))
+php artisan key:generate
+
+-> membuat middleware
+php artisan make:middleware NamaMiddleware
+
+-> menyalakan mode maintenance
+php artisan down
+
+-> menonaktifkan mode maintenance
+php artisan up
+
+-> controller yang terdapat method CRUD
+php artisan make:controller NamaController --resource
+
+-> dibuatkan dengan modelnya
+php artisan make:controller NamaController --model=NamaModel
+
+-> standar api
+php artisan make:controller NamaController --api
+
+-> migration
+php artisan make:migration create_<nm_tabel>_table
+// cek satatus
+php artisan migrate:status
+// tanpa menghapus isi
+php artisan migrate --force
+// merefresh hapus ulang
+php artisan migrate:refresh
+// balik ke sebelumnya
+php artisan migrate:rollback
+// menghapus dan eksekusi ulang
+php artisan migrate:fresh
+
+
+//kurang paham
+depedency injection
+middleware
+error handling
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

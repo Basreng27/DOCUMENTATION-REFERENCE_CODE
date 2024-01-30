@@ -1,0 +1,80 @@
+// server linux ====================================================================
+
+[Init Git Hooks]
+git init --bare
+
+[Create file post-receive]
+touch hooks/post-receive
+
+[Change permission post-receive]
+chmod +x hooks/post-receive
+
+[Change content in post-receive]
+nano hooks/post-receive
+
+-----
+#!/bin/sh
+TARGET="/var/www/html/<path_project>"
+GITDIR="/home/solmit/hooks/<path_project>"
+BRANCH="master"
+
+while read oldrev newrev ref
+do
+	# only checking out the master (or whatever branch you would like to deploy)
+	if [ "$ref" = "refs/heads/$BRANCH" ];
+	then
+		echo "Ref $ref received. Deploying ${BRANCH} branch to production..."
+		git --work-tree=$TARGET --git-dir=$GITDIR checkout -f $BRANCH
+		cd $TARGET 
+		composer install
+	else
+		echo "Ref $ref received. Doing nothing: only the ${BRANCH} branch may be deployed on this server."
+	fi
+done
+-----
+
+
+// Remote Server MayBank ==============================================================
+# Web Server (kumaladewa)
+
+h: 10.1.99.142
+u: audit
+p: M@ybankF2023$
+
+cd /home/audit/rba
+
+pg_dump -h 10.1.99.143 -U postgres -d maybankfinance_rba -n public -f maybankfinance_rba-backup20230803.sql
+PostgreSQL@MaybankF2023
+unzip -o /home/audit/rba/nama_file.zip -d /var/www/html/
+
+# Backup database dari local
+pg_dump -h 192.168.100.217 -U postgres -d maybankfinance_rba_prod20230918 -n public -f maybankfinance_rba-update20230918.sql
+
+PostgreSQL52
+
+# Upload ke /home/audit/rba/maybankfinance_rba-update20230918.sql
+
+# Login ke database server
+psql -U postgres -h 10.1.99.143 sslmode=require
+
+PostgreSQL@MaybankF2023
+
+DROP DATABASE maybankfinance_rba CASCADE;
+
+CREATE DATABASE maybankfinance_rba;
+
+\q
+
+# Restore database
+psql -h 10.1.99.143 -U postgres -d maybankfinance_rba --set=ON_ERROR_STOP=1 --set=ON_ERROR_ROLLBACK=1 -f /home/audit/rba/maybankfinance_rba-update20230918.sql
+
+# Login ke database server
+psql -U postgres -h 10.1.99.143 sslmode=require
+
+PostgreSQL@MaybankF2023
+
+\c maybankfinance_rba
+
+\q
+
+sudo mv [source] [target]

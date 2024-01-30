@@ -1,0 +1,51 @@
+-> Install React JS 
+npx create-react-app my-app
+
+-> Menjalankan React 
+npm start
+
+-> Snippet
+rfce = creat default isi file
+
+-> Beda Port
+$env:PORT=3001 ; npm start
+
+-> Bingung
+Hooks
+Map
+store.jsx
+reportWebVitals();
+
+-> untuk save prettier
+npm install --save-dev prettier
+npx prettier --write .
+
+
+-> untuk di default layout
+import React, { startTransition, useState } from "react";
+
+const MyComponent = () => {
+  const [data, setData] = useState("");
+
+  const handleInputChange = (event) => {
+    const inputValue = event.target.value;
+
+    // Menggunakan startTransition untuk mengelompokkan pembaruan yang mengandung suspensi
+    startTransition(() => {
+      // Memperbarui state data dengan nilai input
+      setData(inputValue);
+    });
+  };
+
+  return (
+    <div>
+      <input type="text" value={data} onChange={handleInputChange} />
+      {/* Komponen lain yang menggunakan data */}
+    </div>
+  );
+};
+
+export default MyComponent;
+
+-> Library untuk consume api
+ npm i axios
