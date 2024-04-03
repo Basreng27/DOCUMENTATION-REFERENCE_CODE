@@ -70,6 +70,66 @@
         ucwords();
     => Load Vendor di index.php
         require_once __DIR__ . '/vendor/autoload.php';
+    => Error Report (index.php)
+        case 'development':
+            error_reporting(-1);
+            ini_set('display_errors', 1);
+            break;
+    => Get "data-id" Di JS
+        function user_manual(e){
+            var file = e.getAttribute('data-file');
+        }
+    => Jika $hasil = "6756757.0000 / 10000000.0000"; (Berupa String)
+        $result = eval("return ($hasil);");
+        $hasil_final = "Operasi matematika tidak valid.";
+
+        if ($result !== false) {
+            $hasil_final = $result * 100;
+        }
+    => Order By Jika Ada 2 Kondisi 
+        // urutkan sesuai dengan "c"."adj_besaran_risiko" DESC dan jika ada data kosong di field "c"."adj_besaran_risiko" maka urutkan berdasarkan 	"b"."besaran_risiko" DESC
+        ORDER BY
+	        COALESCE(CAST("c"."adj_besaran_risiko" AS INT), CAST("b"."besaran_risiko" AS INT)) DESC,
+	        "d"."urutan" ASC;
+    => Menampilkan Tanggal Tanpa Waktu
+        date("Y-m-d", strtotime($validasi['tgl_pengesah']))
+    => Icon
+        <link rel="shortcut icon" href="<?= asset::image()->src('logo.png'); ?>" />
+    => History Search Input (Tambahkan)
+        autocomplete="off"
+    => Landscape Word Header With Style
+        <style>
+            @page
+            {
+                mso-page-border-surround-header: no;
+                mso-page-border-surround-footer: no;
+            }
+
+            @page Section1
+            {
+                size:841.9pt 595.3pt;
+                mso-page-orientation:landscape;
+                margin: 0.7cm 0.7cm 0.7cm 0.7cm;
+                mso-header-margin: 42.55pt;
+                mso-footer-margin: 49.6pt;
+                mso-paper-source: 0;
+                layout-grid: 18.0pt;
+            }
+
+            div.Section1
+            {
+                page: Section1;
+            }
+        </style>
+
+        <div class="Section1"></div>
+    => Down/Up Grade Composer
+        -> composer 1
+            composer self-update --1
+        -> composer 2
+            composer self-update --2
+    => Create UUID
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 ==========================================================================================
 +> Upload
@@ -316,7 +376,8 @@
         ADD COLUMN created_by INT REFERENCES flpp_user(user_id) ON DELETE CASCADE ON UPDATE CASCADE;
     => Merubah Type Data
         CAST(b.indikator_id AS int)
-
+    => Mengganti Type Data
+        ALTER TABLE risk_data_posisi ALTER COLUMN ce_dp_indikator_name TYPE VARCHAR(255);
 ==========================================================================================
 +> Transact
     // Memulai transaksi
@@ -358,6 +419,7 @@
                 key1: "nilai1",
                 key2: "nilai2"
             }, function(data) {
+
             var data = JSON.parse(res);
                 var besaran_risiko = $("#besaran_risiko");
 
@@ -393,6 +455,144 @@
                 });
             });
         });
+    => POST V4 Notif V1
+        $('#evaluasi_form').submit(function(event) {
+            event.preventDefault();
+
+            tinyMCE.triggerSave();
+
+            $('#submit').val('Saving..');
+            $('#submit').attr('disabled', 'disabled');
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: '<?= $form_action; ?>',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    res_data = data.split("-");
+
+                    $("#dialog:ui-dialog").dialog("destroy");
+                    $('.ui-dialog-title').html(res_data[1]);
+                    $('#dialog-message').removeAttr('title');
+                    $('#dialog-message').attr('title', res_data[1]);
+                    $('#dialog-message').html(res_data[2]);
+
+                    $("#dialog-message").dialog({
+                        modal: true,
+                        buttons: {
+                            Ok: function() {
+                                if (res_data[0] != 'ok') {
+                                    window.location.href = "<?= base_url() . 'icaap_srep'; ?>";
+                                } else {
+                                    if (res_data[3] != '') {
+                                        window.opener.load_child(res_data[3]);
+                                        window.close();
+                                    } else {
+                                        window.location.href = "<?= base_url() . 'icaap_srep'; ?>";
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    $('#submit').val('Save');
+                    $('#submit').removeAttr("disabled");
+                }
+            });
+
+            return false;
+        });
+    => POST Notif V2
+        -> HTML
+            <form id="setting_form" name="setting_form" action="<?= $url_save; ?>" method="post">
+                <button type="submit" class="btn btn-primary btn-sm float-right" id="save_setting_form" onclick="save_data_setting('#setting_form')" value="Save"><i class="fas fa-save"></i> Simpan</button>
+            </form>
+
+            <script>
+                function save_data_setting(form, callback, text = "Apakah data ini akan disimpan") {
+                    var formData = $(form).serialize();
+
+                    event.preventDefault();
+
+                    Swal.fire({
+                        title: 'Konfirmasi ?',
+                        text: text,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya',
+                        cancelButtonText: 'Batal',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                type: "POST",
+                                url: $(form).attr('action'),
+                                data: formData,
+                                dataType: "json",
+                                beforeSend: function() {
+                                    $('#loadingWraper').fadeIn();
+                                    $.LoadingOverlay("show");
+                                },
+                                success: function(data) {
+                                    Swal.fire('Info', data.msg, 'info').then(function(e) {
+                                        if (typeof callback === "function") {
+                                            callback();
+                                        } else {
+                                            if (typeof data.url != 'undefined') {
+                                                window.location.href = data.url;
+                                            }
+                                        }
+                                    })
+                                },
+                                error: function(xhr, status, error) {
+                                    var response = xhr.responseJSON;
+                                    Swal.fire('error', response.msg, 'error')
+                                },
+                                complete: function() {
+                                    $('#loadingWraper').fadeOut();
+                                    $.LoadingOverlay("hide");
+                                }
+                            });
+                        }
+                    })
+
+                    return false;
+                }
+            </script>
+        -> Controller
+            function index()
+            {
+                $result['title'] = "Log Activity";
+                $result['data'] = $this->data();
+                $result['url_save'] = base_url('setting/simpan');
+
+                $this->load_template('template_new', $this->class . '/display', $result);
+            }
+
+            public function data()
+            {
+                $data['data'] = $this->setting_model->get_data();
+
+                return $data;
+            }
+
+            public function simpan()
+            {
+                $setting = $this->input->post('setting');
+
+                foreach ($setting as $key => $value) {
+                    $this->db->update($this->table_b_configurations, ['value' => $value], ['title' => $key]);
+                }
+
+                $message = array(TRUE, 'title' => 'Informasi', 'msg'   => 'Proses update data berhasil.!', 'url'   => site_url('setting'));
+
+                echo json_encode($message);
+            }
 
 ==========================================================================================
 +> Chart JS
@@ -896,6 +1096,50 @@
             Object.entries(dt).forEach(([key, el]) => {
                 dropdown += `<option value="${el.id}">${el.nama_unit_kerja}</option>`;
             });
+    => Contoh preventDefault
+        $(document).ready(function() {
+            $('.delete-file').on('click', function(e) {
+                e.preventDefault();
+
+                if (confirm('Apakah Anda yakin ingin menghapus file?')) {
+                    window.location.reload();
+                }
+            });
+        });
+    => Delete Tidak Refresh Halaman
+        -> JS
+            $('a.delete-param').click(function(){
+                var titlenya = $(this).attr("title");
+                var urlDelete = $(this).attr('href');
+            
+                confirmDialog(titlenya, function(){
+                $('#loadingWraper').fadeIn();
+            
+                $.post(urlDelete, {}, function(data){
+                    $('#loadingWraper').fadeOut();
+            
+                    if(data[0] == true){
+                    if(data.status=='remove'){
+                        $(data.remove).remove();
+
+                        // window.location.reload();
+                    }else  if(data.status == 'reload'){
+                        window.location.reload();
+                    }
+                    }else{
+                    alertDialog(data.msg);
+
+                    if(typeof(data.status) != "undefined" && data.status == 'reload'){
+                        window.location.reload();
+                    }
+                    }
+                }, 'json');
+                });
+                
+                return false;
+            });
+        -> HTML
+            <a class="ui-icon ui-icon-trash delete-param" href="<?= site_url('parameter/delete/' . $r_param->parameter_id); ?>"></a>
 
 ==========================================================================================
 +> Export Excel
@@ -1120,7 +1364,94 @@
         $this->form_validation->set_rules('besaran_risiko', 'besaran_risiko', 'required');
 
         if ($this->form_validation->run() == TRUE) {}
+    => Validation Dinamis Password
+        -> Controller
+                $setting = $this->input->post('setting');
 
+                foreach ($setting as $key => $value) {
+                    if ($key == 'checkbox') {
+                        foreach ($value as $key_title => $value_title) {
+                            $get_data_label = $this->master_model->data('', $this->table_b_configurations, ['title' => $key_title])->get()->row_array()['label_options'];
+                            $label_array = json_decode($get_data_label, true);
+
+                            foreach ($label_array as $key_opt => $value_opt) {
+                                if (array_key_exists($key_opt, $value_title)) {
+                                    $value_title[$key_opt] = 1;
+                                } else {
+                                    $value_title[$key_opt] = 0;
+                                }
+                            }
+
+                            // Hapus elemen array berdasarkan key
+                            unset($value_title['check']);
+
+                            $this->db->update($this->table_b_configurations, ['label_options' => json_encode($value_title)], ['title' => $key_title]);
+                        }
+                    } else {
+                        $this->db->update($this->table_b_configurations, ['value' => $value], ['title' => $key]);
+                    }
+                }
+
+                $message = array(TRUE, 'title' => 'Informasi', 'msg'   => 'Proses update data berhasil.!', 'url'   => site_url('setting'));
+
+                echo json_encode($message);
+        -> Filternya
+            // ambil data config password
+            $config_password = $this->master_model->data('', $this->table_b_configurations, ['title' => 'password'])->get()->row_array()['label_options'];
+
+            // label di hardcode
+            $capital = '';
+            $angka = '';
+            $symbol = '';
+
+            $config_options = json_decode($config_password, true);
+
+            if (!empty($config_options)) {
+                foreach ($config_options as $key => $value) {
+                    if ($key == 'capital' && $value) $capital = 'A-Z';
+                    if ($key == 'angka' && $value) $angka = '\d';
+                    if ($key == 'symbol' && $value) $symbol = '@$!%*?&';
+                }
+            }
+
+            $regex = '/^';
+
+            if (!empty($capital)) $regex .= '(?=.*[' . $capital . '])'; // Setidaknya satu huruf kapital
+            if (!empty($angka)) $regex .= '(?=.*[' . $angka . '])'; // Setidaknya satu angka
+            if (!empty($symbol)) $regex .= '(?=.*[' . $symbol . '])'; // Setidaknya satu karakter simbol jika symbol dipilih
+
+            $regex .= '.{5,10}$/'; // Minimal 5 dan maksimal 10 karakter
+
+            $this->form_validation->set_rules('password', 'Password', 'required|regex_match[' . $regex . ']');
+
+            $this->form_validation->set_message('regex_match', 'Password harus memenuhi persyaratan: setidaknya ' . (!empty($capital) ? 'satu huruf kapital' : '') . (!empty($angka) ? ' satu angka' : '') . (!empty($symbol) ? ' satu karakter simbol' : '') . '.');
+        -> View
+            <?php foreach ($data['data'] as $key => $value) : ?>
+                <?php if (($value['type'] != 'file') && ($value['type'] != 'hidden') && ($value['type'] != 'checkbox')) { ?>
+                    <div class="row mb-3">
+                        <div class="col-sm-2">
+                            <label><?= ucwords(str_replace('_', ' ', $value['title'])); ?></label>
+                        </div>
+                        <div class="col-sm-10">
+                            <input type="<?= $value['type']; ?>" class="form-control" name="setting[<?= $value['title']; ?>]" value="<?= $value['value']; ?>">
+                        </div>
+                    </div>
+                <?php } else if ($value['type'] == 'checkbox') { ?>
+                    <div class="row mb-3">
+                        <div class="col-sm-2">
+                            <label><?= ucwords(str_replace('_', ' ', $value['title'])); ?></label>
+                        </div>
+                        <div class="col-sm-10">
+                            <?php foreach (json_decode($value['label_options'], true) as $key_label => $value_label) : ?>
+                                <input type="checkbox" id="<?= $key_label; ?>" name="setting[checkbox][<?= $value['title']; ?>][<?= $key_label; ?>]" <?= ($value_label ? 'checked' : ''); ?>>
+                                <label><?= ucwords(str_replace('_', ' ', $key_label)); ?></label>
+                                <br>
+                            <?php endforeach ?>
+                            <input type="hidden" id="check" name="setting[checkbox][<?= $value['title']; ?>][check]" value="-">
+                        </div>
+                    </div>
+                <?php } ?>
+            <?php endforeach ?>
 ==========================================================================================
 +> Class
     => Untuk table responsive
@@ -1246,6 +1577,7 @@
                     {
                         $trans_table = array(
                             'flpp_activity_log',
+                            // table apa saja yang akan di hapus
                         );
 
                         $max = count($trans_table);
@@ -1416,13 +1748,13 @@
 
 ==========================================================================================
 +> CMD
-    => Restore SQL
+    => Restore PostgreSQL
         -> Local
             psql -U postgres -d database -n schema < sso.sql
         -> Server
             psql -U postgres -h 192.168.100.217 -p 5432 -d maybankfinance_rba_prod20230911 -n public < maybankfinance_rba_backup20230911.sql
             psql -U postgres -d <nama_db> -n <nama_schema> < <nama_file>.sql
-    => Dump SQL
+    => Dump PostgreSQL
         -> Local
             pg_restore -U postgres -d mydatabase backup_file.backup
         -> Server
@@ -1442,3 +1774,38 @@
         php artisan make:module / make:model
     => Jika .GITIGNORE Tidak Berfungsi
         $ git rm -r --cached .
+    => Restore MySQL
+        -> Local
+            cd C:\Program Files\MySQL\MySQL Server X.Y\bin (Masuk Dulu Ke directory MySQL)
+            mysql -u root -h localhost dbtkb < C:\Users\mwand\Downloads\dbtkb.sql
+
+==========================================================================================
++> CSS
+    => Text Tengah / Center
+        text-align: center;
+
+==========================================================================================
++> Library
+    => JS
+        -> InputMask (untuk membuat angka di belakang coma menjadi rapih)
+            > Inputan
+                <input id="decimalInput" type="text" pattern="\d*" placeholder="0" name="..." value="...">
+            > Script
+                // Yang di pakai hanya 2
+                <script src="<?= base_url(); ?>asset/inputmask.js"></script>
+                <script src="<?= base_url(); ?>asset/inputmask.min.js"></script>
+                <script>
+                    Inputmask({
+                        "alias": "numeric",
+                        "radixPoint": ".",
+                        "groupSeparator": ",",
+                        "autoGroup": true,
+                        "digits": 5 // dibelakang coma
+                    }).mask("#decimalInput");
+                </script>
+            > Controller
+                (!empty($angka) ? number_format($angka, 5) : null)
+            -> Database
+                Tipe Datanya Harus Decimal
+                ALTER TABLE risk_t_posisi_risklimit
+                ALTER COLUMN udiv_risk_tolerance TYPE DECIMAL;

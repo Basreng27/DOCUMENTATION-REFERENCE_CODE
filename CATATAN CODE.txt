@@ -11,7 +11,8 @@
             pg_restore -U postgres -d mydatabase backup_file.backup
         -> Server
             pg_dump -h 10.1.99.143 -U postgres -d maybankfinance_rba -n public -f maybankfinance_rba-backup20230803.sql
-		- pg_dump -h 192.168.100.217 -U postgres -d tapera_simr_kickoff -n flpp -f C:/flpp.sql
+		    pg_dump -h 192.168.100.217 -U postgres -d tapera_simr_kickoff -n flpp -f C:/flpp.sql
+            pg_dumpall -h 192.168.100.217 -U postgres -W > backup_all_databases.sql
     => Create Code Igniter 4
         composer create-project codeigniter4/appstarter aplikasi-belajar-ci4
     => Create File
