@@ -4,9 +4,21 @@
             > Bagian
                 Isi
 
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> POSTGRESQL
+    => Mengambil Data Berdasarkan 2 Kondisi
+        SELECT * FROM "wbs_t_notifikasi" 
+        WHERE
+            "st_viewed" = FALSE 
+            AND "action_to_do" IN ('R', 'D') 
+            AND "user_id" = '1';
     => Order By Jika Ada 2 Kondisi 
         // urutkan sesuai dengan "c"."adj_besaran_risiko" DESC dan jika ada data kosong di field "c"."adj_besaran_risiko" maka urutkan berdasarkan 	"b"."besaran_risiko" DESC
         ORDER BY
@@ -31,7 +43,7 @@
         SELECT MD5('password')
     => Drop Schema
         DROP SCHEMA qwe CASCADE
-    => GET Tanggal Atau Bulan
+    => GET Tanggal Atau Bulan Timestamp
         SELECT * FROM rcrmma_t_jadwal
         WHERE
             DATE_PART('day', tanggal_mulai) = 7
@@ -92,8 +104,24 @@
                 <?php }
                     }
                 } ?>
+    => Untuk Mencari Data Yang ada didalamnya
+        -> di buatkan hasilnya json
+            json_agg ( json_build_object ( a.id, CASE WHEN c.email IS NOT NULL THEN c.email ELSE '' END ) ) AS email_penerima,
+        -> mencari m_jabatan yang level nya head dengan menggabungkan di user
+            LEFT JOIN (
+                        SELECT * FROM "user" 
+                        WHERE id_jabatan IN (
+                                SELECT id FROM "m_jabatan" WHERE level = 'HEAD'
+                        )
+                ) d ON a.auditee = d.unit_kerja_id
 
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> PHP
     => Input Tipe Data Timestamp
@@ -363,6 +391,23 @@
 
                 foreach ($query as $key => $value) {
                     $result[$value[$id]] = $value[$nama];
+                }
+
+                return $result;
+            }
+        => Format Options
+            public function to_format_options($data, $value, $label, $default = false)
+            {
+                $result = [];
+
+                if ($default) {
+                    $result[null] = "---Pilih---";
+                }
+
+                if ($data) {
+                    foreach ($data as $key => $value_data) {
+                        $result[$value_data[$value]] = $value_data[$label];
+                    }
                 }
 
                 return $result;
@@ -1051,63 +1096,133 @@
                         }
                     }
     => Email
-        function sendMail($receiver = [], $subject = null, $message = null, $file = null, $cc = [], $bcc = [])
-        {
-            $this->load->library('email');
+        -> V1
+            function sendMail($receiver = [], $subject = null, $message = null, $file = null, $cc = [], $bcc = [])
+            {
+                $this->load->library('email');
 
-            $config = array(
-                'protocol' => 'smtp',
-                'smtp_host' => 'ssl://smtp.gmail.com',
-                'smtp_port' => 465,
-                'smtp_user' => 'vionaindah11@gmail.com',
-                'smtp_pass' => 'dbqqzqippznwdqmk',
-                'mailtype' => 'html',
-                'charset' => 'utf-8',
-                'newline' => "\r\n"
-            );
+                $config = array(
+                    'protocol' => 'smtp',
+                    'smtp_host' => 'ssl://smtp.gmail.com',
+                    'smtp_port' => 465,
+                    'smtp_user' => 'vionaindah11@gmail.com',
+                    'smtp_pass' => 'dbqqzqippznwdqmk',
+                    'mailtype' => 'html',
+                    'charset' => 'utf-8',
+                    'newline' => "\r\n"
+                );
 
-            $this->email->initialize($config);
+                $this->email->initialize($config);
 
-            $this->email->from('vionaindah11@gmail.com', 'SOLMIT');
-            $this->email->to($receiver);
-            $this->email->subject($subject);
-            $this->email->message($message);
+                $this->email->from('vionaindah11@gmail.com', 'SOLMIT');
+                $this->email->to($receiver);
+                $this->email->subject($subject);
+                $this->email->message($message);
 
-            // Add CC
-            if (!empty($cc)) {
-                $this->email->cc($cc);
+                // Add CC
+                if (!empty($cc)) {
+                    $this->email->cc($cc);
+                }
+
+                // Add BCC
+                if (!empty($bcc)) {
+                    $this->email->bcc($bcc);
+                }
+
+                // Path to the file to be attached
+                $file_path = FCPATH . $file;
+
+                // Check if the file exists
+                if (file_exists($file_path)) {
+                    $this->email->attach($file_path);
+                } else {
+                    $hasil['status'] = false;
+                    $hasil['pesan']  = 'File Tidak di Temukan';
+                    $hasil['url']  = base_url('email/send');
+                }
+
+                if ($this->email->send()) {
+                    $hasil['status'] = true;
+                    $hasil['pesan']  = 'Data berhasil disimpan dan dikirim';
+                    $hasil['url']  = base_url('email/send');
+                } else {
+                    $hasil['status'] = false;
+                    $hasil['pesan']  = 'Data gagal dikirim';
+                    $hasil['url']  = base_url('email/send');
+                    echo 'Error sending email: ' . $this->email->print_debugger();
+                }
+
+                $this->output->set_output(json_encode($hasil));
             }
+        -> V2
+            require('./vendor/autoload.php');
 
-            // Add BCC
-            if (!empty($bcc)) {
-                $this->email->bcc($bcc);
-            }
+            require APPPATH . 'third_party/PHPMailer/src/Exception.php';
+            require APPPATH . 'third_party/PHPMailer/src/PHPMailer.php';
+            require APPPATH . 'third_party/PHPMailer/src/SMTP.php';
 
-            // Path to the file to be attached
-            $file_path = FCPATH . $file;
+            use PHPMailer\PHPMailer\PHPMailer;
+            use PHPMailer\PHPMailer\SMTP;
+            use PHPMailer\PHPMailer\Exception;
 
-            // Check if the file exists
-            if (file_exists($file_path)) {
-                $this->email->attach($file_path);
-            } else {
-                $hasil['status'] = false;
-                $hasil['pesan']  = 'File Tidak di Temukan';
-                $hasil['url']  = base_url('email/send');
-            }
+            function sendMailCronJob($receiver = [], $subject = null, $message = null, $file = null, $cc = [], $bcc = [])
+                {
+                    $mail = new PHPMailer(true);
 
-            if ($this->email->send()) {
-                $hasil['status'] = true;
-                $hasil['pesan']  = 'Data berhasil disimpan dan dikirim';
-                $hasil['url']  = base_url('email/send');
-            } else {
-                $hasil['status'] = false;
-                $hasil['pesan']  = 'Data gagal dikirim';
-                $hasil['url']  = base_url('email/send');
-                echo 'Error sending email: ' . $this->email->print_debugger();
-            }
+                    try {
+                    //Server settings
+                    // $mail->SMTPDebug = SMTP::DEBUG_SERVER; 
+                    $mail->isSMTP();
+                    $mail->SMTPAuth   = true;
 
-            $this->output->set_output(json_encode($hasil));
-        }
+                    $mail->Host       = 'ssl://smtp.gmail.com';
+                    $mail->Username   = 'hallo.dadan@gmail.com';
+                    $mail->Password   = 'vzjslvxomufqpeoq';
+                    $mail->Port       = 465;
+
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+
+                    //Recipients
+                    $mail->setFrom('rba.audit@maybankfinance.co.id', 'Aplikasi RBA Maybank Finance');
+                    foreach ($receiver as $destination) {
+                        $mail->addAddress($destination);
+                    }
+
+                    if (!empty($cc)) {
+                        foreach ($cc as $copy) {
+                        $mail->addCC($copy);
+                        }
+                    }
+
+                    if (!empty($bcc)) {
+                        foreach ($bcc as $blind) {
+                        $mail->addBCC($blind);
+                        }
+                    }
+
+                    //Attachments
+                    // $mail->addAttachment('/var/tmp/file.tar.gz');         //Add attachments
+                    // $mail->addAttachment('/tmp/image.jpg', 'new.jpg');    //Optional name
+
+                    // Path to the file to be attached
+                    // $file_path = FCPATH . $file;
+                    // if (file_exists($file_path)) {
+                    //   $mail->addAttachment($file_path);
+                    // }
+
+                    //Content
+                    $mail->isHTML(true);
+                    $mail->Subject = $subject;
+                    $mail->Body    = $message;
+                    // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+                    $mail->send();
+
+                    echo 'Email Berhasil Dikirim';
+                    } catch (Exception $e) {
+                    echo 'Error Mengirim Email : ' . $e;
+                    }
+                }
     => ZIP
         > CONTROLLER
             function createZipFromLinks($links)
@@ -1207,11 +1322,72 @@
         > HTML
             <button type="button" onclick="checkIfAnyChecked()" class="btn btn-info mb-3">Download</button>
             <input type="checkbox" class="download-checkbox" id="download_batch_` + result[a].id + `" name="batch[` + result[a].id + `]" onclick="dAll(this)" value="` + result[a].id + `">
+    => Date
+        => Get Before Month From Mont Now
+            function get_last_year_months($current_month, $current_year)
+            {
+                $months = [];
+                $indo_month_names = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
 
+                $date = DateTime::createFromFormat('Y-m', "$current_year-$current_month");
+
+                for ($i = 0; $i < 12; $i++) {
+                    $index = (int)$date->format('n') - 1;
+                    $month_name_indo = $indo_month_names[$index];
+
+                    $months[] = "$month_name_indo-" . $date->format('Y');
+
+                    $date->modify('-1 month');
+                }
+
+                return $months;
+            }
+    => API
+        => Consume API
+            => POST
+                function send_data_api($url, $data_send = [])
+                    {
+                        $ch = curl_init();
+
+                        curl_setopt($ch, CURLOPT_URL, $url);
+                        curl_setopt($ch, CURLOPT_POST, 1);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data_send));
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                        $response = curl_exec($ch);
+
+                        curl_close($ch);
+
+                        return $response;
+                    }
+    => Array
+        => Pengecekan Array
+            if (in_array($value_opt['email'], $array))
+        => Menghilangkan Array
+            $val_opt = $value_opt['email'];
+            $array_val = array_filter($array_val, function ($val) use ($val_opt) {
+                return $val != $val_opt;
+            }); 
             
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> JAVASCRIPT
+    => Menambahakan Properti/Atribut Pada Tag
+        $('#btn_simpan').prop('disabled', false);
+    => Mengganti Isi Dalam Tag
+        $('#btn_simpan').html('<i class="fa fa-save"></i> Simpan');
+    => Menambahakan Properties
+        let element = $('#st_review_' + indikator_id);
+        element.prop('required', true);
     => Select 2
         => Dengan Class
             $('.select2').select2();
@@ -1457,8 +1633,61 @@
                 }
             });
         });
+    => Menampilkan Beberapa Kata
+         <p id="omitmen"></p>
 
-==========================================================================================
+        <script>
+            var text = "omitmen Penerapan Tata Kelola Yang Baik > BP TAPERA melakukan penilaian (Assessment) atas";
+            var truncatedText = text.substring(0, 17) + "...";
+
+            // document.getElementById("omitmen").textContent = truncatedText;
+            document.getElementById("omitmen").innerHTML = truncatedText;
+        </script>
+    => Jika Error eval()
+        if (preg_match('/^[0-9\.\+\-\*\/\(\) ]+$/', $hasil)) {
+            $result = eval("return $hasil;");
+
+            echo "Hasil perhitungan: " . $result;
+        } else {
+            $result = eval("return $hasil;");
+        }
+    => Penerima Lebih Dari 1 dan Tidak Ada di List
+        => HTML
+            <?= form_open_multipart($save_data_url, array('name' => 'form_email', 'id' => 'form_email', 'class' => 'form-horizontal')); ?>
+                <div class="form-group">
+                    <label>Penerima</label>
+                    <select name="penerima[]" class="form-control select2" multiple="multiple" id="penerimaSelect" data-tags="true">
+                        <?php foreach ($data_user as $key => $value) : ?>
+                            <option value="<?= $value['email']; ?>"><?= $value['nama']; ?> - <?= $value['email'] ?? 'Email Belum Di Atur'; ?> - <?= $value['nama_jabatan']; ?></option>
+                        <?php endforeach ?>
+                    </select>
+                </div>
+            <?= form_close() ?>
+        => JAVASCRIPT
+            $(document).ready(function() {
+                $('#penerimaSelect').select2({
+                tags: true,
+                placeholder: "Tambahkan atau pilih email",
+                allowClear: true,
+                tokenSeparators: [',', ' ']
+                });
+
+                $('#form_email').on('submit', function() {
+                    var selectedOptions = $('#penerimaSelect').val();
+
+                    if (!selectedOptions || selectedOptions.length === 0) {
+                        $('#penerimaSelect').append(selectedOptions).trigger('change');
+                    }
+                });
+            });
+
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> JQUERY
     => Di CONTROLLER PHP
@@ -1509,6 +1738,46 @@
                     });
                 });
             });
+        -> VERSI 4
+            $.ajax({
+                url: '<?= base_url(); ?>/home/load_notif',
+                type: 'POST',
+                data: {
+                status: status
+                },
+                success: function(data) {
+                $('.notif').html('')
+
+                var response = JSON.parse(data)
+                let html = '';
+
+                response.data.forEach(function(item, index) {
+                    console.log(item)
+
+                    html += ` <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 1; background-color: white;">
+                                <div class="toast-header">
+                                <i class="fas fa-bell mr-2"></i>
+                                <strong class="mr-auto">${item.title}</strong>
+                                <small class="text-muted">${item.created_at}</small>
+                                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onclick="closeNotif(${item.id}, '${item.url}')">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                </div>
+
+                                <div class="toast-body">
+                                ${item.message}
+                                <br>
+                                <a href="javascript:;" onclick="closeNotif(${item.id}, '${item.url}', 'SEEN_NOTIF')"> Lihat Task</a>
+                                </div>
+                            </div>`;
+                })
+
+                $('.notif').html(html)
+                },
+                error: function(xhr, status, error) {
+                console.log('error')
+                }
+            })
     => POST Dengan Notif
         -> VERSI 1
             $('#evaluasi_form').submit(function(event) {
@@ -1716,7 +1985,13 @@
                 <a class="ui-icon ui-icon-trash delete-param" href="<?= site_url('parameter/delete/' . $r_param->parameter_id); ?>"></a>
 
 
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> GIT
     => Get All Branch
@@ -1731,7 +2006,13 @@
     => fatal: refusing to merge unrelated histories
         git merge --allow-unrelated-histories origin/main
 
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> HTML
     => Icon
@@ -1745,6 +2026,10 @@
         -> VERSI 2
             <table class="table table-striped table-bordered dt-responsive sticky wrap" width="100%" border="1" style="position: sticky; height: 50vh;">
             <thead class="bg-light text-center align-middle header-table-center" style="position: sticky; top: 0;">
+        -> VERSI 3
+            <div class="col-lg-12" style="overflow-x:auto;">
+                <table class="table table-hover table-striped">
+				    <thead class="header-table-center">
      => Select Multiple
         <div class="form-group col-md-12">
             <label for="peserta">Peserta :</label>
@@ -1783,8 +2068,38 @@
             table-responsive
         => Posisi Button
             flex float-left
+    => Check unCheck
+        <div style="margin-left: 10px;">
+            <input type="checkbox" class="view-status" id="seen" name="view" value="seen"><label>Sudah Dilihat</label>
+            <input type="checkbox" class="view-status" id="unseen" name="view" value="unseen" style="margin-left: 10px;"><label>Belum Dilihat</label>
+        </div>
 
-==========================================================================================
+        <script>
+            $(document).ready(function() {
+                $('.view-status').on('click', function() {
+                var seenChecked = $('#seen').is(':checked');
+                var unseenChecked = $('#unseen').is(':checked');
+
+                if (seenChecked && unseenChecked) {
+                    console.log('seen', 'unseen');
+                } else if (seenChecked) {
+                    console.log('seen');
+                } else if (unseenChecked) {
+                    console.log('unseen');
+                } else {
+                    console.log('none');
+                }
+                });
+            })
+        </script>
+
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> CSS
     => Landscape Word Header With Style
@@ -1816,7 +2131,13 @@
      => Text Tengah / Center
         text-align: center;
 
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> CMD
     => Down/Up Grade Composer
@@ -1855,7 +2176,13 @@
             cd C:\Program Files\MySQL\MySQL Server X.Y\bin (Masuk Dulu Ke directory MySQL)
             mysql -u root -h localhost dbtkb < C:\Users\mwand\Downloads\dbtkb.sql
 
-==========================================================================================
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
 
 +> Library
     => Chart JS
@@ -2191,3 +2518,45 @@
             Tipe Datanya Harus Decimal
             ALTER TABLE risk_t_posisi_risklimit
             ALTER COLUMN udiv_risk_tolerance TYPE DECIMAL;
+
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
+
++> laravel
+    => php artisan
+        => Create Controller
+            php artisan make:controller UserController --resource
+        => Create Model
+            php artisan make:model User
+        => Create Migrate
+            php artisan make:migration create_users_table
+        => API
+            => Login 
+                => Langkah
+                    composer require laravel/sanctum
+                    php artisan migrate
+            => Create Middleware
+                php artisan make:middleware AuthenticateAPI
+                    Atau
+                php artisan make:middleware EnsureAuthenticated
+                    // Daftar Middleware ada di Bootstrap/app.php
+                    $middleware->alias([
+                        'ensure.authenticated' => \App\Http\Middleware\EnsureAuthenticated::class,
+                    ]);
+
+=======================================================================================================================================================================================
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=                                                                                                                                                                                     =
+=======================================================================================================================================================================================
+
++> C#
+    => Run C#
+        dotnet run
