@@ -1,0 +1,43 @@
+=> Install Docker
+	Win/Mac Download Docker Desktop
+=> Cek Versi Docker (run CMD)
+	decker version 
+=> Cek List Image Docker Daemon(Server)
+	docker image ls
+=> Untuk Download Docker image dari Docker Registry
+	docker image pull <namaImage>:tag (tag dihilangkan mendownload latest version nya)
+=> Untuk Menghapus Docker image dari Docker Registry
+	docker image rm <namaImage>:tag
+=> Melihat Container
+	docker container ls -a
+=> Melihat Container yang berjalan
+	docker container ls
+=> Membuat Container
+	docker container create --name <namaContainer> <namaImage>:tag
+=> Menjalankan Container 
+	(GLOBAL)docker container start <containerID/containerName>
+	(MySQL)docker run --name <containerID/containerName> -e MYSQL_ROOT_PASSWORD=RawamA327 -d mysql:latest
+=> Memberhentikan Docker
+	docker container stop <containerID/namaContainer>
+=> Mengahpus Container
+	docker rm <containerID/containerName>
+=> Menghapus Semua Container
+	docker container prune
+=> Melihat Log (Jika Ada Error)
+	docker container logs <containerID/namaContainer>
+=> Melihat Log Secara Live
+	docker container logs -f <containerID/namaContainer>
+=> Masuk kedalam Container dengan Container Exec
+	(GLOBAL)docker container exec -i -t <containerID/namaContainer> /bin/bash
+	(MySQL)docker exec -it <<containerID/containerName>> mysql -u root -p
+=> Melakukan Port Forwarding (Agar bisa diakses dari luar container docker (tambahkan --publish))
+	docker container create --name <namaContainer> --publish <8080-posthost>:<80-portContainer(di container)> image:tag
+=> Menambahkan Env kedalam Docker
+	docker container create --name <namaContainer> --env KEY="<value>" --env KEY2="value" image:tage
+=> Melihat Container Stats
+	docker container stats
+=> Memberikan Resource Limit (agar tidak lag ke container lain)
+	=> Memory
+		--memory 100m(saat membuat container(m => Mega, g = Giga))
+	=> CPU
+		--cpus 1.5 (Menggunakan satu setengah CPU core)

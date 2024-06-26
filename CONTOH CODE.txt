@@ -114,6 +114,31 @@
                                 SELECT id FROM "m_jabatan" WHERE level = 'HEAD'
                         )
                 ) d ON a.auditee = d.unit_kerja_id
+            -> Full Code
+                SELECT
+                    json_agg(
+                        json_build_object(
+                            'id_auditable', a.id,
+                            'email', CASE WHEN c.email IS NOT NULL THEN c.email ELSE '' END,
+                            'nama_user', CASE WHEN c.nama IS NOT NULL THEN c.nama ELSE '' END
+                        )
+                    ) AS email
+                FROM
+                    rba_t_rkat_auditable A 
+                    LEFT JOIN rba_t_kertaskerja b ON a.ID = b.id_auditable
+                    LEFT JOIN ( SELECT * 
+                                    FROM "user" 
+                                    WHERE id_jabatan IN ( SELECT id 
+                                                            FROM m_jabatan 
+                                                            WHERE LEVEL = 'HEAD' ) ) C ON a.auditee = C.unit_kerja_id 
+                WHERE
+                    ( b.status_tindaklanjut IS NULL OR b.status_tindaklanjut != '3' ) 
+                    AND a.tgl_selesaiaudit > '2024-06-05 08:45:20' 
+                    AND a.auditee = 2 
+                GROUP BY
+                    a.tgl_mulaiaudit,
+                    a.id,
+                    a.tgl_selesaiaudit
 
 =======================================================================================================================================================================================
 =                                                                                                                                                                                     =
@@ -1371,6 +1396,25 @@
             $array_val = array_filter($array_val, function ($val) use ($val_opt) {
                 return $val != $val_opt;
             }); 
+    => Merubah File Dan Nama Class Depan Dengan Huruf Besar
+        $directory = 'application/controllers';
+
+        if ($handle = opendir($directory)) {
+            while (false !== ($file = readdir($handle))) {
+                if ($file != "." && $file != ".." && is_file($directory . '/' . $file)) {
+                    $newName = ucfirst($file);
+                    rename($directory . '/' . $file, $directory . '/' . $newName);
+
+                    $filePath = $directory . '/' . $newName;
+                    $content = file_get_contents($filePath);
+                    $className = pathinfo($newName, PATHINFO_FILENAME);
+                    $content = preg_replace('/class\s+\w+/', 'class ' . $className, $content);
+                    file_put_contents($filePath, $content);
+                }
+            }
+            closedir($handle);
+        }
+
             
 =======================================================================================================================================================================================
 =                                                                                                                                                                                     =
@@ -1778,6 +1822,30 @@
                 console.log('error')
                 }
             })
+        -> VERSI 5 (Appen Select Options)
+            $('#sektor_id').on('change', function() {
+                $.ajax({
+                    type: 'GET',
+                    url: '<?= $url_sub_sektor ?>/' + $('#sektor_id').val(),
+                    dataType: 'json',
+                    success: function(res) {
+                    if (res.status) {
+                        $('#sub_sektor_id').empty();
+
+                        $.each(res.data, function(index, item) {
+                        $('#sub_sektor_id').append(new Option(item, index));
+                        });
+
+                        $('#sub_sektor_id').trigger('change').select2();
+                    } else {
+                        console.log('Status false', res);
+                    }
+                    },
+                    error: function(res) {
+                    console.log(res);
+                    }
+                });
+                })
     => POST Dengan Notif
         -> VERSI 1
             $('#evaluasi_form').submit(function(event) {
@@ -2128,8 +2196,39 @@
         </style>
 
         <div class="Section1"></div>
-     => Text Tengah / Center
+    => Text Tengah / Center
         text-align: center;
+    => Loading Icon
+        > CSS
+            #loading {
+                height: 30px;
+                width: 30px;
+                border: 7px solid;
+                border-radius: 50%;
+                border-color: #00BFFF #333333 #333333 #333333;
+                animation: rotate 1.5s linear infinite;
+
+                /* position: fixed; */
+                /* z-index: 999; */
+            }
+
+            @keyframes rotate {
+                to {
+                    transform: rotate(365deg);
+                }
+            }
+
+            .center-content {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        > HTML
+            <div class="row text-center center-content">
+                <div id="loading"></div>
+            </div>
+        > JAVASCRIPT
+            $('#loading').show();/.hide();
 
 =======================================================================================================================================================================================
 =                                                                                                                                                                                     =
