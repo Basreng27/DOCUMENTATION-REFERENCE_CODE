@@ -1,0 +1,773 @@
+=> CMD
+    => Cek Terinstall atau belum
+        sqllocaldb info
+    => Masuk Ke SQL server
+        sqlcmd -S your_server_name
+    => Keluar SQL Server
+        EXIT
+    => Untuk Masuk Kedalam Database master
+        USE master
+        GO
+    => Menganti Password
+        ALTER LOGIN sa WITH PASSWORD = '<password_baru>';
+        GO
+
+=> Query
+    => Global
+        => Cek Version
+            select @@version;
+        => Aktifkan IDENTITY_INSERT untuk tabel 'brands' (Seperti Auto Increment)
+            SET IDENTITY_INSERT brands ON;
+        => Nonaktifkan IDENTITY_INSERT untuk tabel 'brands' (Seperti Auto Increment)
+            SET IDENTITY_INSERT brands OFF;
+    => Basic
+        => DATA MANIPULATION LANGUAGE (DML)
+            => SELECT
+                => V1
+                    SELECT
+                        first_name, last_name
+                    FROM
+                        sales.customers;
+                => V2 (SELECT TOP 10 Teratas)
+                    SELECT TOP 10
+                        product_name, list_price
+                    FROM
+                        production.products
+                    ORDER BY 
+                        list_price DESC;
+                => V3 (1% Dari Total)
+                    SELECT TOP 1 PERCENT
+                        product_name, list_price
+                    FROM
+                        production.products
+                    ORDER BY 
+                        list_price DESC;
+                => V4 (3 Data Teratas dan 3 Data Yang Harganya Sama Dengan Data ke-3)
+                    SELECT TOP 3 WITH TIES
+                        product_name, list_price
+                    FROM
+                        production.products
+                    ORDER BY 
+                        list_price DESC;
+                => V5 (SELECT INTO)
+                    SELECT 
+                        *
+                    INTO 
+                        marketing.customers
+                    FROM 
+                        sales.customers;
+            => WHERE
+                => V1
+                    SELECT
+                        *
+                    FROM
+                        sales.customers
+                    WHERE
+                        state = 'CA';
+                => V2 (AND)
+                    SELECT
+                        product_id, product_name, category_id, model_year, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        category_id = 1 AND model_year = 2018
+                    ORDER BY
+                        list_price DESC;
+                => V3 (Perbandingan)
+                    SELECT
+                        product_id, product_name, category_id, model_year, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price > 300 AND model_year = 2018
+                    ORDER BY
+                        list_price DESC;
+                => V4 (OR)
+                    SELECT
+                        product_id, product_name, category_id, model_year, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price > 3000 OR model_year = 2018
+                    ORDER BY
+                        list_price DESC;
+                => V5 (BETWEEN)
+                    SELECT
+                        product_id, product_name, category_id, model_year, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price BETWEEN 1899.00 AND 1999.99
+                    ORDER BY
+                        list_price DESC;
+                => V6 (Beberapa Data)
+                    SELECT
+                        product_id, product_name, category_id, model_year, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price IN (299.99, 369.99, 489.99)
+                    ORDER BY
+                        list_price DESC;
+                => V7 (LIKE)
+                    SELECT
+                        product_id, product_name, category_id, model_year, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        product_name LIKE '%Cruiser%'
+                        last_name LIKE 'z%' <Awalan z>
+                        last_name LIKE '%er' <Akhiran er>
+                        last_name LIKE 't%s' <Awalan t Akhiran s>
+                        last_name LIKE '_u%' <_ Mewakili 1 Huruf. Jadi Cari Huruf Ke-2 u>
+                        last_name LIKE '[YZ]%' <Awalan Huruf Y dan Z>
+                        last_name LIKE '[A-C]%' <Awalan Huruf A Samapi C>
+                        last_name LIKE '[^A-X]%' <->
+                        first_name NOT LIKE 'A%' <Yang Awalan Depannya Bukan A>
+                        first_name LIKE '%30!%%' ESCAPE '!'; <Menghilangkan ! Atau Mengabaikan>
+                    ORDER BY
+                        list_price;
+                => V8 (BETWEEN)
+                    SELECT
+                        product_id, product_name, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price BETWEEN 149.99 AND 199.99
+                            OR
+                        list_price NOT BETWEEN 149.99 AND 199.99
+                    ORDER BY
+                        list_price;
+            => ORDER BY
+                SELECT
+                    *
+                FROM
+                    sales.customers
+                WHERE
+                    state = 'CA'
+                ORDER BY
+                    first_name <ASC/DESC>,
+                    second_name <Multiple Column></Multiple>,
+                    LEN(first_name)<Urutkan Berdasarkan Panjang Nama> DESC;
+            => GROUP
+                => V1
+                    SELECT
+                        city,
+                        COUNT (*) AS total
+                    FROM
+                        sales.customers
+                    WHERE
+                        state = 'CA'
+                    GROUP BY
+                        city
+                    ORDER BY
+                        city;
+                => V2 (CUBE)
+                    SELECT
+                        d1, d2, d3, aggregate_function (c4)
+                    FROM
+                        table_name
+                    GROUP BY
+                        d1, CUBE (d2, d3);
+                => V3 (ROLL UP)
+                    SELECT
+                        category, brand, SUM (sales) sales
+                    FROM
+                        sales.sales_summary
+                    GROUP BY
+                        ROLLUP (category, brand);
+            => HAVING
+                SELECT
+                    city, COUNT (*) AS total
+                FROM
+                    sales.customers
+                WHERE
+                    state = 'CA'
+                GROUP BY
+                    city
+                HAVING
+                    COUNT (*) > 10
+                ORDER BY
+                    city;
+            => OFFSET
+                => V1
+                    SELECT
+                        product_name, list_price
+                    FROM
+                        production.products
+                    ORDER BY
+                        list_price, product_name 
+                    OFFSET 10 ROWS 
+                    FETCH NEXT 10 ROWS ONLY<Next Mengambil 10 Baris>; 
+                => V2 (Offset 10 price Terbesar)
+                    SELECT
+                        product_name, list_price
+                    FROM
+                        production.products
+                    ORDER BY
+                        list_price DESC, product_name 
+                    OFFSET 0 ROWS 
+                    FETCH FIRST 10 ROWS ONLY;
+            => DISTINCT (Mendapatkan Nilai Berbeda)
+                => V1
+                    SELECT 
+                        DISTINCT city 
+                    FROM 
+                        sales.customers 
+                    ORDER BY 
+                        city;
+                => V2 (Untuk Beberapa Column)
+                    SELECT 
+                        DISTINCT city, state 
+                    FROM 
+                        sales.customers
+            => NULL
+                => Perbandingan
+                    NULL = 0
+                    NULL <> 0
+                    NULL > 0
+                    NULL = NULL
+                => Query
+                    SELECT
+                        customer_id, first_name, last_name, phone
+                    FROM
+                        sales.customers
+                    WHERE
+                        phone IS NOT NULL,
+                        phone IS NULL
+                    ORDER BY
+                        first_name, last_name;
+            => ALIAS (AS)
+                SELECT
+                    a.first_name + ' ' + a.last_name AS 'Full Name'
+                FROM
+                    sales.customers a
+                ORDER BY
+                    a.first_name;
+            => JOIN
+                => V1 (INNER)
+                    SELECT  
+                        c.id candidate_id, c.fullname candidate_name, e.id employee_id, e.fullname employee_name
+                    FROM 
+                        hr.candidates c
+                    INNER JOIN hr.employees e ON e.fullname = c.fullname;
+                => V2 (LEFT)
+                    SELECT  
+                        c.id candidate_id, c.fullname candidate_name, e.id employee_id, e.fullname employee_name
+                    FROM 
+                        hr.candidates c
+                    LEFT JOIN hr.employees e ON e.fullname = c.fullname
+                    WHERE 
+                        e.id IS NULL;
+                => V3 (RIGHT)
+                    SELECT  
+                        c.id candidate_id, c.fullname candidate_name, e.id employee_id, e.fullname employee_name
+                    FROM 
+                        hr.candidates c
+                    RIGHT JOIN hr.employees e ON e.fullname = c.fullname;
+                => V4 (FULL JOIN)
+                    SELECT  
+                        c.id candidate_id, c.fullname candidate_name, e.id employee_id, e.fullname employee_name
+                    FROM 
+                        hr.candidates c
+                    FULL JOIN hr.employees e ON e.fullname = c.fullname
+                    WHERE
+                        c.id IS NULL OR e.id IS NULL;
+                => V5 (FULL OUTER)
+                    SELECT 
+                        m.name member, p.title project
+                    FROM 
+                        pm.members m
+                    FULL OUTER JOIN pm.projects p ON p.id = m.project_id;
+                => V6 (CROSS JOIN)
+                    SELECT
+                        product_id, product_name, store_id, 0 AS quantity
+                    FROM
+                        production.products
+                    CROSS JOIN sales.stores
+                    ORDER BY
+                        product_name, store_id;
+                => V7 (SELF JOIN)
+                    SELECT
+                        e.first_name + ' ' + e.last_name employee, m.first_name + ' ' + m.last_name manager
+                    FROM
+                        sales.staffs e
+                    INNER JOIN sales.staffs m ON m.staff_id = e.manager_id
+                    ORDER BY
+                        manager;
+            => HAVE
+                => V1
+                    SELECT
+                        customer_id, YEAR (order_date), COUNT (order_id) order_count
+                    FROM
+                        sales.orders
+                    GROUP BY
+                        customer_id, YEAR (order_date)
+                    HAVING
+                        COUNT (order_id) >= 2
+                    ORDER BY
+                        customer_id;
+                => V2 (Dengan SUM/MAX/MIN Sama Saja)
+                    SELECT
+                        order_id,
+                        SUM (
+                            quantity * list_price * (1 - discount)
+                        ) net_value
+                    FROM
+                        sales.order_items
+                    GROUP BY
+                        order_id
+                    HAVING
+                        SUM (
+                            quantity * list_price * (1 - discount)
+                        ) > 20000
+                    ORDER BY
+                        net_value;
+            => SUB QUERY
+                => V1 (Where)
+                    SELECT
+                        order_id, order_date, customer_id
+                    FROM
+                        sales.orders
+                    WHERE
+                        customer_id IN (
+                            SELECT
+                                customer_id
+                            FROM
+                                sales.customers
+                            WHERE
+                                city = 'New York'
+                        )
+                    ORDER BY
+                        order_date DESC;
+                => V2 (Bersarang)
+                    SELECT
+                        product_name, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price > (
+                            SELECT
+                                AVG (list_price)
+                            FROM
+                                production.products
+                            WHERE
+                                brand_id IN (
+                                    SELECT
+                                        brand_id
+                                    FROM
+                                        production.brands
+                                    WHERE
+                                        brand_name = 'Strider'
+                                        OR brand_name = 'Trek'
+                                )
+                        )
+                    ORDER BY
+                        list_price;
+                => V3 (ANY/ALL)
+                    SELECT
+                        product_name, list_price
+                    FROM
+                        production.products
+                    WHERE
+                        list_price >= ANY (
+                            SELECT
+                                AVG (list_price)
+                            FROM
+                                production.products
+                            GROUP BY
+                                brand_id
+                        )
+                => V4 (EXISTS/NOT EXISTS Mengembalikan Ada Atau Tidak Ada Datanya)
+                    SELECT
+                        customer_id, first_name, last_name, city
+                    FROM
+                        sales.customers c
+                    WHERE
+                        EXISTS (
+                            SELECT
+                                customer_id
+                            FROM
+                                sales.orders o
+                            WHERE
+                                o.customer_id = c.customer_id
+                            AND YEAR (order_date) = 2017
+                        )
+                    ORDER BY
+                        first_name, last_name;
+                => V5 (Sub Query Yang Bergantung Ke Query Luar)
+                    SELECT
+                        product_name, list_price, category_id
+                    FROM
+                        production.products p1
+                    WHERE
+                        list_price IN (
+                            SELECT
+                                MAX (p2.list_price)
+                            FROM
+                                production.products p2
+                            WHERE
+                                p2.category_id = p1.category_id
+                            GROUP BY
+                                p2.category_id
+                        )
+                    ORDER BY
+                        category_id, product_name;
+            => CROSS APPLY
+                => V1
+                    SELECT
+                        c.category_name, r.product_name, r.list_price
+                    FROM
+                        production.categories c
+                    CROSS APPLY (SELECT
+                                    TOP 2 *
+                                FROM
+                                    production.products p
+                                WHERE
+                                    p.category_id = c.category_id
+                                ORDER BY
+                                    list_price DESC, product_name
+                    ) r
+                    ORDER BY
+                        c.category_name, r.list_price DESC;
+                => V2 (Dengan Function)
+                    CREATE FUNCTION GetTopProductsByCategory (@category_id INT)
+                    RETURNS TABLE
+                    AS
+                    RETURN (
+                        SELECT TOP 2 *
+                        FROM production.products p
+                        WHERE p.category_id = @category_id 
+                        ORDER BY list_price DESC, product_name
+                    );
+                => V3 (Untuk JSON (JSON To Table))
+                    SELECT
+                        p.id, j.*
+                    FROM
+                        product_json p
+                    CROSS APPLY OPENJSON (p.info) WITH
+                    (
+                        Name NVARCHAR(100),
+                        Price DECIMAL(10, 2),
+                        Category NVARCHAR(100)
+                    ) AS j;
+            => OUTER APPLY
+                SELECT
+                    p.product_name, r.quantity, r.discount
+                FROM
+                    production.products p OUTER apply (
+                        SELECT
+                            top 1 i.*
+                        FROM
+                            sales.order_items i
+                        INNER JOIN sales.orders o ON o.order_id = i.order_id
+                        WHERE
+                            product_id = p.product_id
+                        ORDER BY
+                            order_date DESC
+                    ) r
+                    WHERE
+                        p.brand_id = 1
+                    ORDER BY
+                        r.quantity;
+            => UNION (Menggabungkan 2 Atau Lebih Query)
+                SELECT
+                    first_name, last_name
+                FROM
+                    sales.staffs
+                
+                UNION
+                
+                SELECT
+                    first_name, last_name
+                FROM
+                    sales.customers;
+            => EXCEPT (Nilai Yang Tidak Sama)
+                SELECT
+                    product_id
+                FROM
+                    production.products
+                
+                EXCEPT
+                
+                SELECT
+                    product_id
+                FROM
+                    sales.order_items;
+            => INTERSECT (Nilai Yang Sama)
+                SELECT
+                    city
+                FROM
+                    sales.customers
+                
+                INTERSECT
+                
+                SELECT
+                    city
+                FROM
+                    sales.stores
+                ORDER BY
+                    city;
+            => GROUPING SETS
+                SELECT
+                    brand, category, SUM (sales) sales
+                FROM
+                    sales.sales_summary
+                GROUP BY
+                    GROUPING SETS (
+                        (brand, category),
+                        (brand),
+                        (category),
+                        ()
+                    )
+                ORDER BY
+                    brand, category;
+            => INSERT - INSERT INTO SELECT
+                SET IDENTITY_INSERT table_name ON; <Kalau Error>
+                INSERT INTO sales.promotions ( promotion_id, promotion_name, discount, start_date, expired_date ) OUTPUT inserted.promotion_id
+                VALUES
+                    ( 4, '2019 Spring Promotion', 0.25, '20190201', '20190301' ),
+                    ( 4, '2019 Spring Promotion', 0.25, '20190201', '20190301' );
+                SET IDENTITY_INSERT table_name OFF; <Kalau Error>
+            => UPDATE
+                => V1
+                    UPDATE sales.taxes
+                    SET max_local_tax_rate += 0.02,
+                        avg_local_tax_rate += 0.01,
+                        avg_local_tax_rate = 25,
+                    WHERE
+                        max_local_tax_rate = 0.01;
+                => V2 (INNER JOIN/LEFT/RIGHT)
+                    UPDATE
+                        sales.commissions
+                    SET
+                        sales.commissions.commission = c.base_amount * t.percentage
+                    FROM 
+                        sales.commissions c
+                    INNER JOIN sales.targets t ON c.target_id = t.target_id;
+            => DELETE
+                => V1
+                    DELETE FROM target_table;
+                => V2 (TOP 21)
+                    DELETE TOP (21)
+                    FROM production.product_history;
+                => V3 (PERCENT)
+                    DELETE TOP (5) PERCENT
+                    FROM production.product_history;
+                => V4 (WHERE)
+                    DELETE
+                    FROM
+                        production.product_history
+                    WHERE
+                        model_year = 2017;
+            => MERGE
+                MERGE sales.category t 
+                    USING sales.category_staging s
+                ON (s.category_id = t.category_id)
+                WHEN MATCHED
+                    THEN UPDATE SET 
+                        t.category_name = s.category_name,
+                        t.amount = s.amount
+                WHEN NOT MATCHED BY TARGET 
+                    THEN INSERT (category_id, category_name, amount)
+                        VALUES (s.category_id, s.category_name, s.amount)
+                WHEN NOT MATCHED BY SOURCE 
+                    THEN DELETE;
+            => TRANSACTION
+                - BEGIN TRANSACTION;
+                - COMMIT;
+                - ROLLBACK;
+                - @invoice <Mengambil Id Terakhir Yang Di Input>
+                BEGIN TRANSACTION;
+
+                INSERT INTO invoices (customer_id, total)
+                VALUES (100, 0);
+
+                INSERT INTO invoice_items (id, invoice_id, item_name, amount, tax)
+                VALUES (10, 1, 'Keyboard', 70, 0.08),
+                    (20, 1, 'Mouse', 50, 0.08);
+
+                UPDATE invoices
+                SET total = (SELECT
+                SUM(amount * (1 + tax))
+                FROM invoice_items
+                WHERE invoice_id = 1);
+
+                COMMIT;
+            => CTE
+                WITH cte_sales_amounts (staff, sales, year) AS (
+                    SELECT    
+                        first_name + ' ' + last_name, 
+                        SUM(quantity * list_price * (1 - discount)),
+                        YEAR(order_date)
+                    FROM    
+                        sales.orders o
+                    INNER JOIN sales.order_items i ON i.order_id = o.order_id
+                    INNER JOIN sales.staffs s ON s.staff_id = o.staff_id
+                    GROUP BY 
+                        first_name + ' ' + last_name,
+                        year(order_date)
+                )
+
+                SELECT
+                    staff, 
+                    sales
+                FROM 
+                    cte_sales_amounts
+                WHERE
+                    year = 2018;
+            => VIPOT
+                SELECT * FROM   
+                (
+                    SELECT 
+                        category_name, 
+                        product_id
+                    FROM 
+                        production.products p
+                        INNER JOIN production.categories c 
+                            ON c.category_id = p.category_id
+                ) t 
+                PIVOT(
+                    COUNT(product_id) 
+                    FOR category_name IN (
+                        [Children Bicycles], 
+                        [Comfort Bicycles], 
+                        [Cruisers Bicycles], 
+                        [Cyclocross Bicycles], 
+                        [Electric Bikes], 
+                        [Mountain Bikes], 
+                        [Road Bikes])
+                ) AS pivot_table;
+        => DATA DEFINITION LANGUAGE (DDL)
+            => DATABASE 
+                => V1 (CREATE)
+                    CREATE DATABASE TestDb;
+                => V2 (DROP)
+                    DROP DATABASE IF EXISTS TestDb;
+            => SHCEMA
+                => V1
+                    CREATE SCHEMA customer_services;
+                    GO
+                => V2 (ALTER Untuk Memindahkan data dari offices Ke sales)
+                    ALTER SCHEMA sales TRANSFER OBJECT::dbo.offices;  
+                => V3 (DROP)
+                    DROP SCHEMA logistics;
+            => TABLE
+                => V1 (CREATE)
+                    CREATE TABLE sales.visits (
+                        visit_id INT PRIMARY KEY IDENTITY (1, 1), <IDENTITY Seperti Auto Incrementnya>
+                        first_name VARCHAR (50) NOT NULL,
+                        last_name VARCHAR (50) NOT NULL,
+                        visited_at DATETIME,
+                        phone VARCHAR(20),
+                        store_id INT NOT NULL,
+                        FOREIGN KEY (store_id) REFERENCES sales.stores (store_id)
+                    );
+                => V2 (DROP/DELETE)
+                    DROP TABLE IF EXISTS sales.revenues;
+                => V3 (TRUNCATE Menghapus Semua Data)
+                    TRUNCATE TABLE sales.customer_groups; 
+                => V4 (sp_rename Mengganti Nama Field)
+                    EXEC sp_rename 'sales.contr', 'contracts';
+                =? V5 (ADD COLUMN)
+                    ALTER TABLE sales.quotations ADD description VARCHAR (255) NOT NULL;
+                => V6 (ALTER COLUMN Mengganti Tipe Data)
+                    ALTER TABLE t1 ALTER COLUMN c VARCHAR (2);
+                => V7 (DROP COLUMN)
+                    ALTER TABLE sales.price_lists DROP COLUMN note;
+            => SEQUENCE
+                CREATE SEQUENCE item_counter
+                AS INT
+                START WITH 10
+                INCREMENT BY 10;
+                => Untuk Menambahakan Nilai Increment/Menggunakannya Kemana
+                    SELECT NEXT VALUE FOR item_counter;
+                => Informasi Urutan Keberapa
+                    SELECT 
+                        * 
+                    FROM 
+                        sys.sequences;
+            => TEMPORARY TABLE
+                => V1 (CREATE)
+                    CREATE TABLE ##heller_products (
+                        product_name VARCHAR(MAX),
+                        list_price DEC(10,2)
+                    );
+                => V2 (INSERT)
+                    INSERT INTO ##heller_products
+                    SELECT
+                        product_name, list_price
+                    FROM 
+                        production.products
+                    WHERE
+                        brand_id = 3;
+                => V3 (DROP)
+                    DROP TABLE ##table_name;
+            => SYNONIM
+                => V1 (CREATE)
+                    CREATE SYNONYM suppliers FOR test.purchasing.suppliers;
+                => V2 (DROP)
+                    DROP SYNONYM IF EXISTS orders;
+            => TYPE DATA
+                => V1 (CHECK)
+                    unit_price DEC(10,2) CHECK(unit_price > 0)
+                => V2 (UNIQUE Tidak Boleh Sama Dengan Yang Lain)
+                    email VARCHAR(255) UNIQUE
+            => CASE WHEN
+                SELECT    
+                    CASE order_status
+                        WHEN 1 THEN 'Pending'
+                        WHEN 2 THEN 'Processing'
+                        WHEN 3 THEN 'Rejected'
+                        WHEN 4 THEN 'Completed'
+                    END AS order_status, 
+                    COUNT(order_id) order_count
+                FROM    
+                    sales.orders
+                WHERE 
+                    YEAR(order_date) = 2018
+                GROUP BY 
+                    order_status;
+            => EXPRESSION
+                => V1 (Mengganti Nilai 'NULL' Menjadi 'N/A')
+                    COALESCE(phone,'N/A') phone,
+                => V2 (Mengganti Nilai phone Menjadi '' Dan Tetap Menampilkan Nilai 'NULL')
+                    NULLIF(phone,'') IS NULL;
+            => DUPLICATE
+                => V1 (Mencari Data Duplicate)
+                    WITH cte AS (
+                        SELECT 
+                            a,  b, 
+                            ROW_NUMBER() OVER (
+                                PARTITION BY a,b
+                                ORDER BY a,b) rownum
+                        FROM 
+                            t1
+                    ) 
+                    SELECT 
+                        *
+                    FROM 
+                        cte 
+                    WHERE 
+                        rownum > 1;
+                => V2 (Delete Data Duplicate)
+                    WITH cte AS (
+                        SELECT 
+                            contact_id,  first_name,  last_name,  email, 
+                            ROW_NUMBER() OVER (
+                                PARTITION BY 
+                                    first_name, 
+                                    last_name, 
+                                    email
+                                ORDER BY 
+                                    first_name, 
+                                    last_name, 
+                                    email
+                            ) row_num
+                        FROM 
+                            sales.contacts
+                    )
+                    DELETE FROM cte
+                    WHERE row_num > 1;
+    => ADVANCE
+        => 

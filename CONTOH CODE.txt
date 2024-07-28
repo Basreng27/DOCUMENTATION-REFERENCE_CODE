@@ -13,6 +13,8 @@
 =======================================================================================================================================================================================
 
 +> POSTGRESQL
+    => Menggabungkan 2 String
+        SELECT CONCAT(name, '-', class) FROM user 
     => Mengambil Data Berdasarkan 2 Kondisi
         SELECT * FROM "wbs_t_notifikasi" 
         WHERE
@@ -24,6 +26,10 @@
         ORDER BY
 	        COALESCE(CAST("c"."adj_besaran_risiko" AS INT), CAST("b"."besaran_risiko" AS INT)) DESC,
 	        "d"."urutan" ASC;
+    => Mencari date dari - sampai (antara dari - sampai)
+        DATE_TRUNC('month', "a"."tglterjadi") BETWEEN '2023-06-01' AND '2024-06-30'
+    => Mencari Tahun 
+        EXTRACT(YEAR FROM a.tglterjadi) = 2024 
     => Create UUID
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
     => IF Dalam Query
@@ -37,6 +43,17 @@
         CREATE SEQUENCE rcrmma_t_jadwal_id START 15;
         ALTER TABLE "public"."rcrmma_t_jadwal" 
             ALTER COLUMN "id" SET DEFAULT nextval('rcrmma_t_jadwal_id'::regclass);
+    => Create Table Sequence
+        CREATE SEQUENCE rpc_m_dampak_id_seq START 1;
+        
+        CREATE TABLE rpc_m_dampak (
+            ID BIGINT PRIMARY KEY DEFAULT nextval('rpc_m_dampak_id_seq'),
+            code VARCHAR(10) NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT
+        );
+
+        ALTER TABLE rpc_m_dampak ALTER COLUMN ID SET DEFAULT nextval('rpc_m_dampak_id_seq'::regclass);
     => Squence Auto Increment Pada Field
         nextval('ai_tigapilar'::regclass)
     => Text Menjadi MD5
@@ -139,6 +156,22 @@
                     a.tgl_mulaiaudit,
                     a.id,
                     a.tgl_selesaiaudit
+     => Function SQL
+        => Count Data
+            => PHP
+                $count_child = $this->db->query("SELECT count_mapping_product(?, ?)", array($row['indikator_id'], $id_produk))->num_rows();
+            => Query
+                CREATE OR REPLACE FUNCTION count_mapping_product(parent_id INTEGER, id_product INTEGER)
+                RETURNS INTEGER AS $$
+                        BEGIN
+                                RETURN (SELECT 
+                                                    COUNT(*) 
+                                                FROM rpc_m_indikator a
+                                                LEFT JOIN rpc_m_mapping_indikator_produk b ON a.indikator_id = b.indikator_id AND b.id_produk = id_product
+                                                WHERE 
+                                                    a.in_parent_id = parent_id);
+                        END;
+                $$ LANGUAGE plpgsql;
 
 =======================================================================================================================================================================================
 =                                                                                                                                                                                     =
@@ -1373,7 +1406,8 @@
     => API
         => Consume API
             => POST
-                function send_data_api($url, $data_send = [])
+                => V1
+                    function send_data_api($url, $data_send = [])
                     {
                         $ch = curl_init();
 
@@ -1388,6 +1422,28 @@
 
                         return $response;
                     }
+                => V2
+                    public static function send_data_api($url, $data_send = [])
+                    {
+                        $ch = curl_init();
+
+                        curl_setopt($ch, CURLOPT_URL, $url);
+                        curl_setopt($ch, CURLOPT_POST, 1);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data_send));
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                        $response = curl_exec($ch);
+
+                        curl_close($ch);
+
+                        $response_decode = json_decode($response, true);
+
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            die('JSON Decode Error: ' . json_last_error_msg());
+                        }
+
+                        return $response_decode;
+                    }
     => Array
         => Pengecekan Array
             if (in_array($value_opt['email'], $array))
@@ -1396,6 +1452,42 @@
             $array_val = array_filter($array_val, function ($val) use ($val_opt) {
                 return $val != $val_opt;
             }); 
+        => Mengambil kd_loker saja
+            => Contoh
+                Array
+                (
+                    [0] => Array
+                        (
+                            [kd_loker] => 224
+                        )
+
+                    [1] => Array
+                        (
+                            [kd_loker] => 225
+                        )
+
+                    [2] => Array
+                        (
+                            [kd_loker] => 226
+                        )
+                )
+
+                hasil yang di inginkan:
+                Array
+                (
+                    [0] => 224
+                    [1] => 225
+                    [2] => 226
+                )
+            => Penyelesaian
+                array_column($list_unit, 'kd_loker');
+        => Chunk
+            $chunks = array_chunk($data_insert, 50000);
+
+            foreach ($chunks as $chunk) {
+                if (!empty($chunk))
+                    $this->db->insert_batch($this->table_m_mapping_indikator, $chunk);
+            }
     => Merubah File Dan Nama Class Depan Dengan Huruf Besar
         $directory = 'application/controllers';
 
@@ -1425,6 +1517,25 @@
 =======================================================================================================================================================================================
 
 +> JAVASCRIPT
+    => Cek jika Ada Null ganti 0
+        => Data [7832687200, null, null, null, null, null, 100, null, null, 4535]
+        let dataActual = response.data.actual
+        dataActual = dataActual.map(value => value === null ? 0 : value);
+    => Option value append dari js
+        $('#product_bank_1').empty();
+
+        $.each(response.data, function(key, value) {
+            $('#product_bank_1').append(new Option(value, key));
+        });
+
+        // Triger Selected
+        $('#product_bank_1 option[value="<?= $default['produkbank']; ?>"]').prop('selected', true);
+        $('#product_bank_1').trigger('change');
+    => Dari Select Option ke select option
+        var selectedValue = $('#product_bank option:selected').val();
+        if ($('#fnmproduk option[value="' + selectedValue + '"]').length > 0) {
+            $('#product_bank').val(selectedValue).trigger('change');
+        }
     => Menambahakan Properti/Atribut Pada Tag
         $('#btn_simpan').prop('disabled', false);
     => Mengganti Isi Dalam Tag
@@ -1724,6 +1835,12 @@
                     }
                 });
             });
+    => checked
+        if ($('#is_usulan').is(':checked')) {
+			console.log('Checkbox is checked. Value:', $('#is_usulan').val());
+		} else {
+			console.log('Checkbox is not checked.');
+		}
 
 =======================================================================================================================================================================================
 =                                                                                                                                                                                     =
@@ -1845,7 +1962,7 @@
                     console.log(res);
                     }
                 });
-                })
+            })
     => POST Dengan Notif
         -> VERSI 1
             $('#evaluasi_form').submit(function(event) {

@@ -78,6 +78,22 @@
             tanggal_mulai DESC;
     => Alter Tabler Reference
         ADD COLUMN created_by INT REFERENCES flpp_user(user_id) ON DELETE CASCADE ON UPDATE CASCADE;
+    => Function SQL
+        => Count Data
+            => PHP
+                $count_child = $this->db->query("SELECT count_mapping_product(?, ?)", array($row['indikator_id'], $id_produk))->num_rows();
+            => Query
+                CREATE OR REPLACE FUNCTION count_mapping_product(parent_id INTEGER, id_product INTEGER)
+                RETURNS INTEGER AS $$
+                        BEGIN
+                                RETURN (SELECT 
+                                                    COUNT(*) 
+                                                FROM rpc_m_indikator a
+                                                LEFT JOIN rpc_m_mapping_indikator_produk b ON a.indikator_id = b.indikator_id AND b.id_produk = id_product
+                                                WHERE 
+                                                    a.in_parent_id = parent_id);
+                        END;
+                $$ LANGUAGE plpgsql;
 
 ==========================================================================================
 +> Environment Variable

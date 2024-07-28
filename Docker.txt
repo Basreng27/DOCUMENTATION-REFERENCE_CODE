@@ -41,3 +41,22 @@
 		--memory 100m(saat membuat container(m => Mega, g = Giga))
 	=> CPU
 		--cpus 1.5 (Menggunakan satu setengah CPU core)
+=> Melakukan Mounting (Mengirim file/folder kedalam container)
+	docker container create --name <namaContainer> --mounth "type=bind(atau mount, volume),source=<folder>,destination=<folder(tujuan)>,readonly(agar tidak dapat di edit filenya)" image:tag
+=> Cek Path
+	pwd
+=> Membuat Volume
+	docker volume create <namaVolume>
+=> Menghapus Volume 
+	docker volume rm <namaVolume>
+=> Backup Volume
+=> Restore Volume
+=> Network Driver (untuk menghubungkan container-container)
+=> Melihat Network 
+	docker network ls
+=> Membuat Network
+	docker network create --driver <namaDriver> <namaNetwork>
+=> Menghapus Network
+	docker network rm <namaNetwork>
+=> Membuat Container dengan Network
+	docker container create --name <namaContainer> --network <namaNetwork> image:tag (Replay (Container Network))
