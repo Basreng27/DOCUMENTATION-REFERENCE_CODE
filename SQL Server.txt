@@ -13,14 +13,14 @@
         GO
 
 => Query
-    => Global
+    => GLOBAL
         => Cek Version
             select @@version;
         => Aktifkan IDENTITY_INSERT untuk tabel 'brands' (Seperti Auto Increment)
             SET IDENTITY_INSERT brands ON;
         => Nonaktifkan IDENTITY_INSERT untuk tabel 'brands' (Seperti Auto Increment)
             SET IDENTITY_INSERT brands OFF;
-    => Basic
+    => BASIC
         => DATA MANIPULATION LANGUAGE (DML)
             => SELECT
                 => V1
@@ -709,6 +709,52 @@
                 => V2 (DROP)
                     DROP SYNONYM IF EXISTS orders;
             => TYPE DATA
+                => NUMERIC
+                    Data Type	            Lower                                   limit	                                    Upper limit	Memory
+                    bigint	                −2^63 (−9,223,372, 036,854,775,808)	    2^63−1 (−9,223,372, 036,854,775,807)	    8 bytes
+                    int	                    −2^31 (−2,147, 483,648)	                2^31−1 (−2,147, 483,647)	                4 bytes
+                    smallint	            −2^15 (−32,767)	                        2^15 (−32,768)	                            2 bytes
+                    tinyint	                0	                                    255	                                        1 byte
+                    bit	                    0	                                    1	                                        1 byte/8bit column
+                    decimal	                −10^38+1	                            10^381−1	                                5 to 17 bytes
+                    numeric	                −10^38+1	                            10^381−1	                                5 to 17 bytes
+                    money	                −922,337, 203, 685,477.5808	            +922,337, 203, 685,477.5807	                8 bytes
+                    smallmoney	            −214,478.3648	                        +214,478.3647	                            4 bytes
+                => APPROXIMATE NUMERIC  
+                    Data Type	            Lower limit	                            Upper limit	                                Memory	                                        Precision
+                    float(n)	            −1.79E+308	                            1.79E+308	                                Depends on the value of n	                    7 Digit
+                    real	                −3.40E+38	                            3.40E+38	                                4 bytes	                                        15 Digit
+                => DATE TIME                    
+                    Data Type	            Storage size	                        Accuracy	                                Lower Range	                                    Upper Range
+                    datetime	            8 bytes	                                Rounded to increments of .000, .003, .007	1753-01-01	                                    9999-12-31
+                    smalldatetime	        4 bytes, fixed	                        1 minute	                                1900-01-01	                                    2079-06-06
+                    date	                3 bytes, fixed	                        1 day	                                    0001-01-01	                                    9999-12-31
+                    time	                5 bytes	                                100                                         nanoseconds	                                    00:00:00.0000000	23:59:59.9999999
+                    datetimeoffset	        10 bytes	                            100                                         nanoseconds	                                    0001-01-01	9999-12-31
+                    datetime2	            6 bytes	                                100                                         nanoseconds	                                    0001-01-01	9999-12-31
+                => STRING
+                    Data Type	            Lower limit	                            Upper limit	                                Memory
+                    char	                0 chars	                                8000 chars	                                n bytes
+                    varchar	                0 chars	                                8000 chars	                                n bytes + 2 bytes
+                    varchar                 (max)	                                0 chars	2^31                                chars	n bytes + 2 bytes
+                    text	                0 chars	                                2,147,483,647                               chars	n bytes + 4 bytes
+                    nchar	                d chars	                                4000 chars	                                2 times n bytes
+                    nvarchar	            0 chars	                                4000 chars	                                2 times n bytes + 2 bytes
+                    ntext	                0 chars	                                1,073,741,823 char	                        2 times the string length
+                    binary	                0 bytes	                                8000 bytes	                                n bytes
+                    varbinary	            0 bytes	                                8000 bytes	                                The actual length of data entered + 2 bytes
+                    image	                0 bytes	                                2,147,483,647 bytes	
+                => OTHER
+                    Data Type	            Description
+                    cursor	                for variables or stored procedure OUTPUT parameter that contains a reference to a cursor
+                    rowversion	            expose automatically generated, unique binary numbers within a database.
+                    hierarchyid	            represent a tree position in a tree hierarchy
+                    uniqueidentifier	    16-byte GUID
+                    sql_variant	store       values of other data types
+                    XML	                    store XML data in a column, or a variable of XML type
+                    Spatial Geometry type	represent data in a flat coordinate system.
+                    Spatial Geography type	store ellipsoidal (round-earth) data, such as GPS latitude and longitude coordinates.
+                    table	                store a result set temporarily for processing at a later time
                 => V1 (CHECK)
                     unit_price DEC(10,2) CHECK(unit_price > 0)
                 => V2 (UNIQUE Tidak Boleh Sama Dengan Yang Lain)
@@ -770,4 +816,508 @@
                     DELETE FROM cte
                     WHERE row_num > 1;
     => ADVANCE
-        => 
+        => VIEW
+            => V1 (CREATE)
+                CREATE VIEW sales.product_info
+                AS
+                SELECT
+                    product_name, 
+                    brand_name, 
+                    list_price
+                FROM
+                    production.products p
+                INNER JOIN production.brands b 
+                        ON b.brand_id = p.brand_id;
+            => V2 (DROP)
+                DROP VIEW IF EXISTS sales.daily_sales;
+            => V3 (RENAME)
+                EXEC sp_rename 
+                    @objname = 'sales.product_catalog',
+                    @newname = 'product_list';
+            => V4 (LIST)
+                CREATE PROC usp_list_views(
+                    @schema_name AS VARCHAR(MAX)  = NULL,
+                    @view_name AS VARCHAR(MAX) = NULL
+                )
+                AS
+                SELECT 
+                    OBJECT_SCHEMA_NAME(v.object_id) schema_name,
+                    v.name view_name
+                FROM 
+                    sys.views as v
+                WHERE 
+                    (@schema_name IS NULL OR 
+                    OBJECT_SCHEMA_NAME(v.object_id) LIKE '%' + @schema_name + '%') AND
+                    (@view_name IS NULL OR
+                    v.name LIKE '%' + @view_name + '%');
+        => INDEX (Membantu Membuat Load Data Lebih Cepat)
+            => V1 (CREATE)
+                CREATE CLUSTERED INDEX ix_parts_id ON production.parts (part_id, first_name<Bisa Lebih Dari 1>);
+            => V2 (RENAME)
+                EXEC sp_rename 
+                    @objname = N'sales.customers.ix_customers_city',
+                    @newname = N'ix_cust_city' ,
+                    @objtype = N'INDEX';
+            => V3 (UNIQUE)
+                CREATE UNIQUE INDEX ix_cust_email ON sales.customers(email);
+            => V4 (DISABLED)
+                ALTER INDEX ix_cust_city ON sales.customers DISABLE;
+            => V5 (ENABLED)
+                ALTER INDEX index_name/ALL ON table_name REBUILD;
+            => V6 (DROP/DELETE)
+                DROP INDEX IF EXISTS ix_cust_email ON sales.customers;
+            => V7 (INCLUDE COLUMN)
+                CREATE UNIQUE INDEX ix_cust_email_inc ON sales.customers(email) 
+                INCLUDE(first_name,last_name);
+            => V8 (FILTER)
+                CREATE INDEX ix_cust_phone ON sales.customers(phone)
+                WHERE phone IS NOT NULL;
+        => PROCEDURE
+            => V1 (CREATE)
+                CREATE PROCEDURE uspProductList
+                AS
+                BEGIN
+                    SELECT 
+                        product_name, 
+                        list_price
+                    FROM 
+                        production.products
+                    ORDER BY 
+                        product_name;
+                END;
+            => V2 (DROP)
+                DROP PROCEDURE sp_name;
+        => VARIABLE
+            => V1 (FIELD)
+                DECLARE @model_year SMALLINT;
+
+                SET @model_year = 2018;
+
+                SELECT
+                    product_name,
+                    model_year,
+                    list_price 
+                FROM 
+                    production.products
+                WHERE 
+                    model_year = @model_year
+                ORDER BY
+                    product_name;
+            => V2 (TABLE)
+                DECLARE @product_table TABLE (
+                    product_name VARCHAR(MAX) NOT NULL,
+                    brand_id INT NOT NULL,
+                    list_price DEC(11,2) NOT NULL
+                );
+
+                INSERT INTO @product_table
+                SELECT
+                    product_name,
+                    brand_id,
+                    list_price
+                FROM
+                    production.products
+                WHERE
+                    category_id = 1;
+
+                SELECT
+                    *
+                FROM
+                    @product_table;
+                GO
+        => BEGIN ... END
+            BEGIN
+                SELECT
+                    product_id,
+                    product_name
+                FROM
+                    production.products
+                WHERE
+                    list_price > 100000;
+
+                IF @@ROWCOUNT = 0
+                    PRINT 'No product with price greater than 100000 found';
+            END
+        => IF .. ELSE
+            BEGIN
+                DECLARE @sales INT;
+
+                SELECT 
+                    @sales = SUM(list_price * quantity)
+                FROM
+                    sales.order_items i
+                    INNER JOIN sales.orders o ON o.order_id = i.order_id
+                WHERE
+                    YEAR(order_date) = 2018;
+
+                SELECT @sales;
+
+                IF @sales > 10000000 <if(boolean return)>
+                BEGIN
+                    PRINT 'Great! The sales amount in 2018 is greater than 10,000,000';
+                END
+
+                ELSE <else>
+                BEGIN
+                    PRINT 'Sales amount in 2017 did not reach 10,000,000';
+                END
+            END
+        => WHILE
+            DECLARE @counter INT = 1;
+
+            WHILE @counter <= 5
+            BEGIN
+                PRINT @counter;
+                SET @counter = @counter + 1;
+            END
+        => BREAK
+            DECLARE @counter INT = 0;
+
+            WHILE @counter <= 5
+            BEGIN
+                SET @counter = @counter + 1;
+                IF @counter = 4
+                    BREAK;
+                PRINT @counter;
+            END
+        => CONTINUE
+            DECLARE @counter INT = 0;
+
+            WHILE @counter < 5
+            BEGIN
+                SET @counter = @counter + 1;
+                IF @counter = 3
+                    CONTINUE;	
+                PRINT @counter;
+            END
+        => CURSOR (Memproses Baris Perbaris)
+            => Deklarasikan Kursor
+                DECLARE 
+                    @product_name VARCHAR(MAX), 
+                    @list_price   DECIMAL;
+
+                DECLARE cursor_product CURSOR
+                FOR SELECT 
+                        product_name, 
+                        list_price
+                    FROM 
+                        production.products;
+            => OPEN CURSOR
+                OPEN cursor_product;
+            => Ambil Setiap Baris Dari Kursor Dan Cetak Nama Produk Dan Daftar Harga
+                FETCH NEXT FROM cursor_product INTO 
+                    @product_name, 
+                    @list_price;
+
+                WHILE @@FETCH_STATUS = 0
+                    BEGIN
+                        PRINT @product_name + CAST(@list_price AS varchar);
+                        FETCH NEXT FROM cursor_product INTO 
+                            @product_name, 
+                            @list_price;
+                    END;
+            => CLOSE CURSOR
+                CLOSE cursor_product;
+            => Cancle Alokasi Kursor
+                DEALLOCATE cursor_product;
+        => TRY CATCH
+            => V1
+                CREATE PROC usp_delete_person(
+                    @person_id INT
+                ) AS
+                BEGIN
+                    BEGIN TRY
+                        BEGIN TRANSACTION;
+                        -- delete the person
+                        DELETE FROM sales.persons 
+                        WHERE person_id = @person_id;
+                        -- if DELETE succeeds, commit the transaction
+                        COMMIT TRANSACTION;  
+                    END TRY
+                    BEGIN CATCH
+                        -- report exception
+                        EXEC usp_report_error;
+                        
+                        -- Test if the transaction is uncommittable.  
+                        IF (XACT_STATE()) = -1  
+                        BEGIN  
+                            PRINT  N'The transaction is in an uncommittable state.' +  
+                                    'Rolling back transaction.'  
+                            ROLLBACK TRANSACTION;  
+                        END;  
+                        
+                        -- Test if the transaction is committable.  
+                        IF (XACT_STATE()) = 1  
+                        BEGIN  
+                            PRINT N'The transaction is committable.' +  
+                                'Committing transaction.'  
+                            COMMIT TRANSACTION;     
+                        END;  
+                    END CATCH
+                END;
+                GO
+            => V2 (RAISE ERROR (Menampilkan Error))
+                DECLARE 
+                    @ErrorMessage  NVARCHAR(4000), 
+                    @ErrorSeverity INT, 
+                    @ErrorState    INT;
+
+                BEGIN TRY
+                    RAISERROR('Error occurred in the TRY block.', 17, 1);
+                END TRY
+                BEGIN CATCH
+                    SELECT 
+                        @ErrorMessage = ERROR_MESSAGE(), 
+                        @ErrorSeverity = ERROR_SEVERITY(), 
+                        @ErrorState = ERROR_STATE();
+
+                    -- return the error inside the CATCH block
+                    RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+                END CATCH;
+            => V3 (THROW (Menampilkan Error TRY CATCH))
+                BEGIN TRY
+                    INSERT INTO t1(id) VALUES(1);
+                    --  cause error
+                    INSERT INTO t1(id) VALUES(1);
+                END TRY
+                BEGIN CATCH
+                    PRINT('Raise the caught error again');
+                    THROW;
+                END CATCH
+        => DINAMIS SQL
+            => V1
+                'SELECT * FROM production.products'; <Menggunakan ' Didepannya>
+            => V2 SQL INJECTION (Menghindari Injection)
+                CREATE OR ALTER PROC usp_query
+                (
+                    @schema NVARCHAR(128), 
+                    @table  NVARCHAR(128)
+                )
+                AS
+                    BEGIN
+                        DECLARE 
+                            @sql NVARCHAR(MAX);
+                        -- construct SQL
+                        SET @sql = N'SELECT * FROM ' 
+                            + QUOTENAME(@schema) 
+                            + '.' 
+                            + QUOTENAME(@table);
+                        -- execute the SQL
+                        EXEC sp_executesql @sql;
+                    END;
+        => FUNCTION
+            => AGGREGATE
+                Aggregate function	        Description
+                AVG	                        Calculate the average of non-NULL values in a set of values.
+                CHECKSUM_AGG	            Calculate a checksum value based on a group of rows.
+                COUNT	                    Return the number of rows in a group that satisfy a condition.
+                COUNT(*)	                Return the number of rows from a table, which meets a certain condition.
+                COUNT(DISTINCT)	            Return the number of unique values in a column that meets a certain condition.
+                COUNT IF	                Show you how to use the COUNT function with the IIF function to form a COUNT IF function that returns the total number of values based on a condition.
+                COUNT_BIG	                The COUNT_BIG() function returns the number of rows (with BIGINT data type) in a group, including rows with NULL values.
+                MAX	                        Return the highest value (maximum) in a set of non-NULL values.
+                MIN	                        Return the lowest value (minimum) in a set of non-NULL values.
+                STDEV	                    Calculate the sample standard deviation of a set of values.
+                STDEVP	                    Return the population standard deviation of a set of values.
+                SUM	                        Return the summation of all non-NULL values in a set.
+                SUM IF	                    Use the SUM function with the IIF function to form a SUM IF function that returns the total of values based on a condition.
+                STRING_AGG 	                Concatenate strings by a specified separator
+                VAR	                        Return the sample variance of a set of values.
+                VARP	                    Return the population variance of a set of values.
+            => DATE TIME    
+                Function	                Description
+                CURRENT_TIMESTAMP	        Returns the current system date and time without the time zone part.
+                GETUTCDATE	                Returns a date part of a date as an integer number.
+                GETDATE	                    Returns the current system date and time of the operating system on which the SQL Server is running.
+                SYSDATETIME	                Returns the current system date and time with more fractional seconds precision than the GETDATE() function.
+                SYSUTCDATETIME	            Returns the current system date and time in UTC time
+                SYSDATETIMEOFFSET	        Returns the current system date and time with the time zone.
+            => DATE TIME PARTS  
+                Function	                Description
+                DATENAME	                Returns a date part of a date as a character string
+                DATEPART	                Returns a date part of a date as an integer number
+                DAY	                        Returns the day of a specified date as an integer
+                MONTH	                    Returns the month of a specified date as an integer
+                YEAR	                    Returns the year of the date as an integer.
+            => BETWEEN 2 DATE   
+                Function	                Return value
+                DATEDIFF	                Returns a difference in date part between two dates.
+            => MODIFY DATE  
+                Function	                Description
+                DATEADD	                    Adds a value to a date part of a date and return the new date value.
+                EOMONTH	                    Returns the last day of the month containing the specified date, with an optional offset.
+                SWITCHOFFSET	            Changes the time zone offset of a DATETIMEOFFSET value and preserves the UTC value.
+                TODATETIMEOFFSET	        Transforms a DATETIME2 value into a DATETIMEOFFSET value.
+            => CONSTRUCTING DATE    
+                Function	                Description
+                DATEFROMPARTS	            Return a DATE value from the year, month, and day.
+                DATETIME2FROMPARTS	        Returns a DATETIME2 value from the date and time arguments
+                DATETIMEOFFSETFROMPARTS	    Returns a DATETIMEOFFSET value from the date and time arguments
+                TIMEFROMPARTS	            Returns a TIME value from the time parts with the precisions
+            => VALIDAE
+                Function	                Description
+                ISDATE	                    Check if a value is a valid date, time, or datetime value
+            => STRING
+                Function	                Description
+                ASCII	                    Return the ASCII code value of a character
+                CHAR	                    Convert an ASCII value to a character
+                CHARINDEX	                Search for a substring inside a string starting from a specified location and return the position of the substring.
+                CONCAT	                    Join two or more strings into one string
+                CONCAT_WS	                Concatenate multiple strings with a separator into a single string
+                DIFFERENCE	                Compare the SOUNDEX() values of two strings
+                FORMAT	                    Return a value formatted with the specified format and optional culture
+                LEFT	                    Extract a given a number of characters from a character string starting from the left
+                LEN	                        Return a number of characters of a character string
+                LOWER	                    Convert a string to lowercase
+                LTRIM	                    Return a new string from a specified string after removing all leading blanks
+                NCHAR	                    Return the Unicode character with the specified integer code, as defined by the Unicode standard
+                PATINDEX	                Returns the starting position of the first occurrence of a pattern in a string.
+                QUOTENAME	                Returns a Unicode string with the delimiters added to make the input string a valid delimited identifier
+                REPLACE	                    Replace all occurrences of a substring, within a string, with another substring
+                REPLICATE	                Return a string repeated a specified number of times
+                REVERSE	                    Return the reverse order of a character string
+                RIGHT	                    Extract a given a number of characters from a character string starting from the right
+                RTRIM	                    Return a new string from a specified string after removing all trailing blanks
+                SOUNDEX	                    Return a four-character (SOUNDEX) code of a string based on how it is spoken
+                SPACE	                    Returns a string of repeated spaces.
+                STR	                        Returns character data converted from numeric data.
+                STRING_AGG	                Concatenate rows of strings with a specified separator into a new string
+                STRING_ESCAPE	            Escapes special characters in a string and returns a new string with escaped characters
+                STRING_SPLIT	            A table-valued function that splits a string into rows of substrings based on a specified separator.
+                STUFF	                    Delete a part of a string and then insert another substring into the string starting at a specified position.
+                SUBSTRING	                Extract a substring within a string starting from a specified location with a specified length
+                TRANSLATE	                Replace several single-characters, one-to-one translation in one operation.
+                TRIM	                    Return a new string from a specified string after removing all leading and trailing blanks
+                UNICODE	                    Returns the integer value, as defined by the Unicode standard, of a character.
+                UPPER	                    Convert a string to uppercase
+            => SYSTEM
+                Function                    Description
+                CAST                        Cast a value of one type to another.
+                CONVERT                     Convert a value of one type to another.
+                CHOOSE                      Return one of the two values based on the result of the first argument.
+                ISNULL                      Replace NULL with a specified value.
+                ISNUMERIC                   Check if an expression is a valid numeric type.
+                IIF                         Add if-else logic to a query.
+                TRY_CAST                    Cast a value of one type to another and return NULL if the cast fails.
+                TRY_CONVERT                 Convert a value of one type to another and return the value to be translated into the specified type. It returns NULL if the cast fails.
+                TRY_PARSE                   Convert a string to a date/time or a number and return NULL if the conversion fails.
+                Convert datetime to string  Show you how to convert a datetime value to a string in a specified format.
+                Convert string to datetime  Describe how to convert a string to a datetime value.
+                Convert datetime to date    Convert a datetime to a date.
+                GENERATE_SERIES()           Generate a series of numbers within a specific range.
+            => JSON 
+                https://www.sqlservertutorial.net/sql-server-json-functions/
+            => MATH
+                Function	                Description
+                ABS	                        Return the absolute value of a number.
+                ACOS	                    Return an angle (in radians) of a specified cosine.
+                ASIN	                    Return an angle (in radians) of a specified sine.
+                ATAN	                    Return the arctangent (in radians) of a specified tangent.
+                CEILING	                    Round a number to the nearest integer greater than or equal to the input number.
+                COS	                        Return the cosine of the specified angle, measured in radians.
+                COT	                        Return the cotangent of the specified angle, which is the reciprocal of the tangent.
+                DEGREES	                    Convert an angle value in radians to degrees.
+                EXP	                        Return the exponential value of a number.
+                FLOOR	                    Round a number to the nearest integer less than or equal to the input value.
+                LOG	                        Return the natural logarithm of a float with a specific base (default to e).
+                PI	                        Return the constant value of PI, accurate to 15 digits.
+                POWER	                    Return the result of raising a number to a specific power.
+                RAND	                    Return a random float between 0 and 1.
+                RADIANS	                    Convert an angle value in degrees to radians.
+                ROUND	                    Return a number rounded to a specified precision.
+                SIGN	                    Return the sign of a number, 1 for positive, -1 for negative, and 0 for zero.
+                SIN	                        Return the sine of an angle in radians.
+                SQRT	                    Return the square root of a float.
+                SQUARE	                    Return the square of a number.
+                TAN	                        Return the tangent of the specified angle, measured in radians.
+            => V1 (CREATE)
+                CREATE FUNCTION sales.udfNetSale(
+                    @quantity INT,
+                    @list_price DEC(10,2),
+                    @discount DEC(4,2)
+                )
+                RETURNS DEC(10,2)
+                AS 
+                BEGIN
+                    RETURN @quantity * @list_price * (1 - @discount);
+                END;
+            => V2 (Call Function)
+                SELECT sales.udfNetSale(10,100,0.1) net_sale;
+            => V3 (Memodifikasi Fungsi)
+                CREATE OR ALTER FUNCTION [schema_name.]function_name (parameter_list)
+                    RETURN data_type AS
+                    BEGIN
+                        statements
+                        RETURN value
+                    END
+            => V4 (DROP/DELETE)
+                DROP FUNCTION sales.udfNetSale;
+        => TRIGGER (Memicu Kejadian Jika Ada Kejadian Di production.trg_product_audit Ke production.products)
+            => V1
+                CREATE TRIGGER [schema_name.]trigger_name
+                ON table_name
+                AFTER  {[INSERT],[UPDATE],[DELETE]}
+                [NOT FOR REPLICATION]
+                AS
+                {sql_statements}
+                ==========================================
+                CREATE TRIGGER production.trg_product_audit
+                ON production.products
+                AFTER INSERT, DELETE
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+                    INSERT INTO production.product_audits(
+                        product_id, 
+                        product_name,
+                        brand_id,
+                        category_id,
+                        model_year,
+                        list_price, 
+                        updated_at, 
+                        operation
+                    )
+                    SELECT
+                        i.product_id,
+                        product_name,
+                        brand_id,
+                        category_id,
+                        model_year,
+                        i.list_price,
+                        GETDATE(),
+                        'INS'
+                    FROM
+                        inserted i
+                    UNION ALL
+                    SELECT
+                        d.product_id,
+                        product_name,
+                        brand_id,
+                        category_id,
+                        model_year,
+                        d.list_price,
+                        GETDATE(),
+                        'DEL'
+                    FROM
+                        deleted d;
+                END
+            => V2 
+                CREATE TRIGGER [schema_name.] trigger_name
+                ON {table_name | view_name }
+                INSTEAD OF {[INSERT] [,] [UPDATE] [,] [DELETE] }
+                AS
+                {sql_statements}
+            => V3 (DDL)
+                CREATE TRIGGER trigger_name
+                ON { DATABASE |  ALL SERVER}
+                [WITH ddl_trigger_option]
+                FOR {event_type | event_group }
+                AS {sql_statement}
+            => V4 (DISABLED)
+                DISABLE TRIGGER sales.trg_members_insert/ALL ON sales.members;
+            => V5 (ENABLED)
+                ENABLE TRIGGER sales.trg_members_insert/ALL ON sales.members;
+            => V6 (DROP)
+                DROP TRIGGER IF EXISTS sales.trg_member_insert;
+    => SERVER ADMINISTRATION
+        https://www.sqlservertutorial.net/sql-server-administration/
