@@ -2365,7 +2365,7 @@
         => Local
             psql -U postgres -d database -n schema < sso.sql
         => Server
-            psql -U postgres -h 192.168.100.217 -p 5432 -d maybankfinance_rba_prod20230911 -n public < maybankfinance_rba_backup20230911.sql
+            psql -U postgres -h 192.168.100.217 -p 5432 -d databasenya -n public < nm_file.sql
             psql -U postgres -d <nama_db> -n <nama_schema> < <nama_file>.sql
     => Dump PostgreSQL
         => Local
