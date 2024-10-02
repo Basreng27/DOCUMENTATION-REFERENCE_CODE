@@ -5,3 +5,9 @@
 <input type="text" name="" v-model="nama"> = data pada variable nama juga ikt berubah seperti update
 <button v-on:click="nilai++">CLICK</button> = ketika di click
 nama.toUpperCase() = membuat tulisan menjadi besar semua
+
+
+
+
+CREATE SEQUENCE rpc_m_indikator_indikator_id_seq START 1;
+ALTER TABLE orsa.rpc_m_pengendalian_risiko ALTER COLUMN code TYPE VARCHAR(50);
