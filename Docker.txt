@@ -7,7 +7,9 @@
 => Untuk Download Docker image dari Docker Registry
 	docker image pull <namaImage>:tag (tag dihilangkan mendownload latest version nya)
 => Untuk Menghapus Docker image dari Docker Registry
-	docker image rm <namaImage>:tag
+		docker image rm <namaImage>:tag
+	Atau
+		docker image rm -f <reactjs/movies:1.0.0/IMAGE ID>
 => Melihat Container
 	docker container ls -a
 => Melihat Container yang berjalan
@@ -28,8 +30,6 @@
 => Melihat Log Secara Live
 	docker container logs -f <containerID/namaContainer>
 => Masuk kedalam Container dengan Container Exec
-	(GLOBAL)docker container exec -i -t <containerID/namaContainer> /bin/bash
-	(MySQL)docker exec -it <<containerID/containerName>> mysql -u root -p
 => Melakukan Port Forwarding (Agar bisa diakses dari luar container docker (tambahkan --publish))
 	docker container create --name <namaContainer> --publish <8080-posthost>:<80-portContainer(di container)> image:tag
 => Menambahkan Env kedalam Docker
@@ -60,3 +60,155 @@
 	docker network rm <namaNetwork>
 => Membuat Container dengan Network
 	docker container create --name <namaContainer> --network <namaNetwork> image:tag (Replay (Container Network))
+
+=> From Yt
++> CMD
+    => Cek Version 
+        docker --Version
+    => Cek Active
+        docker info
+    => Build
+        - (-t reactjs/movies => Image)
+        - (:1.0.0 => Version)
+        - (. => Path Now/Path File That Will Be Build)
+
+        docker build -t reactjs/movies:1.0.0 . 
+    => See Images
+        docker images
+    => Run Images/Project
+        - (-p 3000:3000 => Port (Left For Public And Right For in Container))
+        - (reactjs/movies:1.0.0 => Images Run With Version)
+        
+        docker run -d -p 3000:3000 reactjs/movies:1.0.0 
+    => Cek Running Container
+        docker ps
+    => Cek Running And Stop Container
+        docker ps -a
+    => Cek Log
+        docker logs <container_id>
+    => Delegte Images
+        docker rmi reactjs/movies:1.0.0
+    => Stop Images
+        docker container stop <code/ID>
+    => Rebuild
+        docker build -t your-image-name .
+
+
+=> Run Docker Registry
+Untuk menggunakan Docker Registry, kamu bisa memilih untuk menggunakan Docker Hub (registry publik yang paling umum digunakan) atau private Docker registry. Berikut adalah langkah-langkah dasar untuk menggunakan Docker Registry.
+
+1. Menggunakan Docker Hub (Public Docker Registry)
+Docker Hub adalah registry publik yang memungkinkanmu untuk menyimpan, mengelola, dan mendistribusikan image Docker. Berikut langkah-langkahnya:
+
+a. Login ke Docker Hub
+Jika belum punya akun, kamu bisa membuat akun di Docker Hub. Setelah memiliki akun, login dengan perintah:
+
+docker login
+Kamu akan diminta memasukkan username dan password akun Docker Hub.
+
+b. Push Image ke Docker Hub
+Build image jika kamu belum melakukannya:
+
+docker build -t your-dockerhub-username/repository-name:tag .
+Contoh:
+
+docker build -t myusername/learn-restfull-api:1.0.0 .
+Push image ke Docker Hub:
+
+docker push your-dockerhub-username/repository-name:tag
+Contoh:
+
+docker push myusername/learn-restfull-api:1.0.0
+Pull image dari Docker Hub di mesin lain:
+
+docker pull your-dockerhub-username/repository-name:tag
+Contoh:
+
+docker pull myusername/learn-restfull-api:1.0.0
+Jalankan image yang telah di-pull:
+
+docker run -d -p 3000:3000 myusername/learn-restfull-api:1.0.0
+2. Menggunakan Private Docker Registry
+Jika kamu ingin menggunakan private registry, misalnya untuk penggunaan internal atau jika tidak ingin menyimpan image di Docker Hub, kamu bisa menggunakan Docker Registry pribadi. Docker sudah menyediakan image untuk menjalankan registry sendiri.
+
+a. Menjalankan Private Docker Registry
+Menjalankan Registry di Docker:
+
+Jalankan perintah berikut untuk menjalankan private Docker registry di localhost:
+
+docker run -d -p 5000:5000 --name registry registry:2
+Registry ini akan tersedia di localhost:5000.
+
+Build image dengan nama baru yang mengacu ke private registry:
+
+docker build -t localhost:5000/myimage:1.0.0 .
+Push image ke private registry:
+
+docker push localhost:5000/myimage:1.0.0
+Pull image dari private registry di mesin lain (atau di mesin yang sama):
+
+docker pull localhost:5000/myimage:1.0.0
+Jalankan image yang telah di-pull:
+
+docker run -d -p 3000:3000 localhost:5000/myimage:1.0.0
+b. Konfigurasi Private Registry dengan Sertifikat SSL
+Untuk membuat registry lebih aman, kamu bisa menggunakan sertifikat SSL sehingga registry dapat diakses dengan HTTPS.
+
+Generate sertifikat SSL atau gunakan sertifikat yang valid.
+
+Jalankan registry dengan SSL:
+
+docker run -d \
+  -p 443:443 \
+  --name registry \
+  -v /path/to/certs:/certs \
+  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+  -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
+  registry:2
+Push dan pull image dengan aman menggunakan https://your-registry.com.
+
+3. Mengelola Docker Registry
+Melihat image di registry:
+
+Kamu bisa melihat image yang tersimpan di registry dengan menggunakan curl:
+
+curl http://localhost:5000/v2/_catalog
+Menghapus image dari registry:
+
+Untuk menghapus image dari private registry, kamu perlu menggunakan beberapa plugin atau tools seperti regclient karena Docker Registry API tidak menyediakan fitur ini secara langsung.
+
+4. Alternatif Private Registry
+Jika ingin solusi yang lebih kuat dan enterprise-ready, kamu bisa menggunakan registry seperti:
+
+GitLab Container Registry: Jika kamu menggunakan GitLab, GitLab menyediakan registry pribadi yang terintegrasi dengan repositori kodemu.
+Harbor: Sebuah private registry open-source yang mendukung image scanning, role-based access control, dan banyak fitur lainnya.
+Amazon ECR (Elastic Container Registry): Sebuah layanan dari AWS untuk private registry yang mendukung integrasi dengan layanan AWS lainnya.
+Dengan langkah-langkah di atas, kamu bisa menggunakan registry publik atau private sesuai kebutuhan proyekmu.
+
+
+2. Database di Localhost (Laptop)
+Jika kamu ingin menggunakan database PostgreSQL yang berjalan di laptop kamu (bukan di Docker), maka DATABASE_URL harus diarahkan ke localhost atau IP dari laptop kamu. Tapi ingat, container Docker tidak bisa mengakses localhost secara langsung, karena localhost di dalam container merujuk ke container itu sendiri, bukan laptop host.
+
+Untuk menghubungkan ke database di laptop (host), kamu harus menggunakan salah satu pendekatan berikut:
+
+Menggunakan host.docker.internal
+Docker menyediakan hostname khusus (host.docker.internal) untuk mengakses host (laptop) dari container.
+
+plaintext
+Copy code
+DATABASE_URL=postgresql://postgres:password@host.docker.internal:5432/mydatabase
+Dengan cara ini, container Docker akan mencoba mengakses PostgreSQL yang berjalan di laptop melalui host.docker.internal.
+
+Menggunakan IP Address
+Jika host.docker.internal tidak tersedia, kamu bisa mencari IP address dari laptop dan menggunakannya di DATABASE_URL:
+
+plaintext
+Copy code
+DATABASE_URL=postgresql://postgres:password@<IP-LAPTOP>:5432/mydatabase
+Kesimpulan:
+Jika database di container Docker: Pastikan DATABASE_URL mengarah ke service database yang diatur dalam docker-compose.yml.
+Jika database di laptop (host): Gunakan host.docker.internal atau IP address dari laptop kamu.
+Jadi, tergantung pada konfigurasi yang kamu pilih:
+
+Jika mengikuti konfigurasi Docker Compose yang saya berikan, database yang digunakan adalah yang berjalan di Docker.
+Jika kamu menginginkan database yang berjalan di laptop, sesuaikan DATABASE_URL agar mengarah ke localhost (menggunakan host.docker.internal).

@@ -1,0 +1,939 @@
+https://github.com/ProgrammerZamanNow/belajar-mongodb-dasar
+
+SQL 			=		NOSQL
+Database 		= 		Database
+Table 			= 		Collection
+Column			=		Field
+Row, Record		=		Document
+Join Table		=		Embedded Document
+
+=> CMD
+	=> Run MongoDB With .zip Not Installer
+		=> Create Folder "Data" To Save All Data (C:\Users\mwand\OneDrive\Desktop\MY PROGRAM\Learn-Mongo-DB)
+			- "data" Is folder
+
+			cd bin
+
+			mongod --dbpath "C:\Users\mwand\OneDrive\Desktop\MY PROGRAM\Learn-Mongo-DB\data"
+	=> Stop
+		ctrl + c
+
+=> MogoDBShell
+	=> Connect Database
+		cd bin
+
+		mongosh "mongodb://localhost:27017/<dbname or empty>"
+	=> Create Or Use Database/Collection
+		use <db/collname> 
+		
+		(Dtabase Will Create If You Create Collection In Database)
+	=> Show All Databases
+		show databases
+	=> Database Method
+		Database Methods										Description
+		db.dropDatabase()										Delete Database
+		db.getName()											Take Name Database
+		db.hostInfo()											Information Host
+		db.version()											Version
+		db.stats()												Statistic Database Usage
+	=> Database Collections Method
+		Collections Methods										Description
+		db.getCollectionNames()									Get All Collection Name
+		db.createCollection("<name>")							Create New Collection
+		db.getCollection("<name>")								Get Object Collection Name
+		db.<name>												Same With "db.getCollection(<name>)"
+		db.getCollectionInfos									Get All Collection Information
+	=> Collections Method
+		Collections Methods										Description
+		db.<collection>.find()									Get All Document
+		db.<collection>.count()									Count Document
+		db.<collection>.drop()									Delete Document
+		db.<collection>.totalSize()								Size Document
+		db.<collection>.stats()									Information Document
+	=> Type Data BSON = JSON But BSON Using Binary Can Save File
+		Type Data												Alias						Description
+		Double													double
+		String													string
+		Object													object
+		Array													array
+		Binary Data												binData
+		ObjectId												objectId					Is Random Data Unique (Auto Increment) _id
+		Boolean													bool
+		Date													date
+		Null													null
+		Regural Expression										regex
+		JavaScript												javascript
+		JavaScript With Scope									javascriptWithScope
+		32 Bit Integer											int
+		Timestamp												timestamp
+		64 Bit Integer											long
+		Decimal 128												decimal
+		Min Key													minKey
+		Max Key													maxKey
+	=> Insert Document Function
+		Function												Description
+		db.<collection>.insertOne(<jsondocument>)				Add Document To Collection
+		db.<collection>.insertMany(<array(<jsondocument>)>)		Add Many Document To Collection
+
+		=> Insert Example
+			=> V1
+				db.customers.insertOne({
+					_id: "wandi",
+					name: "Rayandra"
+				})
+			=> V2
+				db.products.insertMany([
+					{
+						_id: 1,
+						name: "Mie",
+						price: new NumberLong("2000") // Konversi To Type Data long
+					},
+					{
+						_id: 2,
+						name: "Mie Goreng",
+						price: new NumberLong("2000") // Konversi To Type Data long
+					},
+				])
+			=> V3
+				db.orders.insertOne({
+					_id: new ObjectId(), // Random Id
+					total: new NumberLong("8000"), // Konversi To Type Data long
+					items: [
+						{
+							product_id: 1,
+							price: new NumberLong("2000"), // Konversi To Type Data long
+							quantity: new NumberInt("2"), // Konversi To Type Data long
+						},
+						{
+							product_id: 2,
+							price: new NumberLong("2000"), // Konversi To Type Data long
+							quantity: new NumberInt("2"), // Konversi To Type Data long
+						}
+					]
+				})
+	=> Query Document Function
+		Function												Description
+		db.<collection>.finc(<query>)							Find Document With Query
+
+			=> Query Find Example
+				=> V1 (SELECT * FROM customers WHERE _id = "wandi")
+					db.customers.find({_id: "wandi"})
+				=> V2 (SELECT * FROM customers WHERE items.product_id = 1 (If Nested Find))
+					db.orders.find({"items.product_id": 1})
+				=> V3 (SELECT * FROM customers WHERE items.product_id = 1 AND total = 8000 (More WHERE))
+					db.orders.find({"items.product_id": 1, "total":8000})
+	=> Comparison Operator
+		Function												Description
+		$eq														Comparison Value ((Equals) = "or" == )
+		$gt														Comparison Value ((Greatter Than) > )
+		$gte													Comparison Value ((Greatter Than Equal) >= )
+		$lt														Comparison Value ((less Than) < )
+		$lte													Comparison Value ((less Than Equal) <= )
+		$in														Comparison Value In Array (Where IN (1, 2) )
+		$nin													Comparison Value Not In Array (Where NOT IN (1, 2) )
+		$ne														Comparison Value Not Same With Another Value ( != )
+
+			=> Query Find Example
+				=> V1
+					db.customers.find({
+						"name": {
+							$<operator>: <value >
+						}
+					})
+				=> V2 (SELECT * FROM customers WHERE _id = "wandi")
+					db.customers.find({
+						_id: {
+							$eq: "wandi"
+						}
+					})
+				=> V3 (AND)
+					db.products.find({
+						category: {
+							$in: ["laptop", "handphone"]
+						},
+						price: {
+							$gt: 10000000
+						}
+					})
+	=> Logical Operator
+		Function												Description
+		$and													Combine 2 Operator (... AND ...)
+		$or														Combine 2 Operator (... OR ...)
+		$nor													Combine 2 Operator (... NOR ...)
+		$not													Combine 2 Operator (... NOT ...)
+
+		=> Query Example
+			=> V1 (AND)
+				db.products.find({
+					$and: [
+						{
+							category: {
+								$in: ["laptop", "handphone"]
+							}
+						},
+						{
+							price: {
+								$gt: 10000000
+							}
+						}
+					]
+				})
+
+			=> V1 (NOT)
+				db.products.find({
+					category: {
+						$not: {
+							$in: ['laptop', 'handphone']
+						}
+					}
+				})
+	=> Element Operator
+		Function												Description
+		$exists													Compare Document Have Field
+		$type													Compare Document Have Type
+
+		=> Query Example
+			=> V1
+				db.customers.find({
+					field=: {
+						$operator: value
+					}
+				})
+			=> V2 (SELECT * FROM products WHERE category IS NULL)
+				db.products.find({
+					category: {
+						$exists: false
+					}
+				})
+			=> V3 (SELECT * FROM products WHERE TYPE(category) = 'string')
+				db.products.find({
+					category: {
+						$type: "string"
+					}
+				})
+			=> V4 (SELECT * FROM products WHERE TYPE(price) IN ('int', 'long'))
+				db.products.find({
+					price: {
+						$type: ['int', 'long']
+					}
+				})
+	=> Evaluation Operator
+		Operator												Description
+		$expr													Use Aggregation Operation (Compare Atribut)
+		$jsonSchema												Validate Document As JSON Schema : https://json-schema.org/
+		$mod													Operation Modulo (mod %)
+		$regex													Get Document As Regural Expression (PCRE) (Like Query)
+		$text													Find Using Text
+		$where													Get Document With JavaScript Function
+
+		=> Query Example
+			=> V1 (ID & NAME Same) (SELECT * FROM customers WHERE _id = name)
+				db.customers.find({
+					$expr: {
+						$eq: ['$_id', '$name']
+					}
+				})
+			=> V2 (SELECT * FROM products WHERE name IS NOT NULL AND category IS NOT NULL)
+				db.products.find({
+					$jsonSchema: {
+						required: ['name', 'category']
+					}
+				})
+			=> V3 (SELECT * FROM products WHERE name IS NOT NULL AND TYPE(name) = 'string' AND TYPE(price) = 'number')
+				db.products.find({
+					$jsonSchema: {
+						required: ['name'],
+						properties: {
+							name: {
+								type: 'string'
+							},
+							price: {
+								type: 'number'
+							}
+						}
+					}
+				})
+			=> V4 (SELECT * FROM products WHERE price % 5 = 0)
+				db.products.find({
+					price: {
+						$mod: [5, 0]
+					}
+				})
+			=> V5 (SELECT * FROM products WHERE price % 1000000 = 0)
+				db.products.find({
+					price: {
+						$mod: [1000000, 0]
+					}
+				})
+			=> V6 (SELECT * FROM products WHERE name LIKE '%mie%')
+				db.products.find({
+					name: {
+						$regex: /mie/,
+						$options: 'i' // In Case Sensitive
+					}
+				})
+			=> V7 (SELECT * FROM products WHERE name LIKE 'Mie%')
+				db.products.find({
+					name: {
+						$regex: /^Mie/
+					}
+				})
+			=> V8 (SELECT * FROM products WHERE _id = name) (With JavaScript Function)
+				db.customers.find({
+					$where: function (){
+						return this._id == this.name;
+					}
+				})
+	=> Array Operator
+		Operator												Description
+		$all													Compare Array Have Elements
+		$elemMatch												Get Document Every Element In Array Meets Certain Conditions
+		$size													Get Document Size Array
+
+		=> Query Example (If Field tags Have Array Value)
+			=> V1 (SELECT * FROM products WHERE (tags = "samsung" AND tags = "monitor"))
+				db.products.find({
+					tags: {
+						$all: ['samsung', 'monitor']
+					}
+				})
+			=> V2 (SELECT * FROM products WHERE tags IN ("samsung", "logitech"))
+				db.products.find({
+					tags: {
+						$elemMatch: {
+							$in: ['samsung', 'logitech']
+						}
+					}
+				})
+			=> V3 (SELECT * FROM products WHERE COUNT(tags) = 4)
+				db.products.find({
+					tags: {
+						$size: 4
+					}
+				})
+	=> Projection (Get Field Will Show In Query)
+		db.<collection>.find(<query>, <projection>)
+
+		Operator												Description
+		$														Limit Array Return First Row Match With Array Operator
+		$elemMatch												Limit Array Return First Row Match With Query
+		$meta													Retun Meta Data In Every Match Document
+		$slice													Control Show Data (LIMIT 10)
+
+		=> Query Example
+			=> V1 (SELECT _id, name FROM products)
+				db.products.find({}, {
+					name: 1,
+					category: 1
+				})
+			=> V2 (SELECT _id, name, category FROM products) (Get Without tags And price)
+				db.products.find({}, {
+					tags: 0,
+					price: 0
+				})
+			=> V3 (SELECT _id, name, tags[first] FROM products)
+				db.products.find({}, {
+					name: 1,
+					tags: {
+						$elemMatch: {
+							$in: ['samsung', 'logitech', 'accessories']
+						}
+					}
+				})
+			=> V4 (SELECT _id, name, tags[first] FROM products WHERE tags IS NOT NULL)
+				db.products.find({
+					tags: {
+						$exists: true
+					}
+				}, {
+					name: 1,
+					"tags.$": 1
+				})
+			=> V5 (SELECT _id, name, tags[0-1] FROM products WHERE tags IS NOT NULL)
+				db.products.find({
+					tags: {
+						$exists: true
+					}
+				}, {
+					name: 1,
+					tags: {
+						$slice: 2
+					}
+				})
+	=> Query Modifier
+		Operator												Description
+		count()													Count Total Data
+		limit(size)												Limit Data
+		skip(size)												Skip Data
+		short(size)												Order By Data
+
+		=> Query Example
+			=> V1 (SELECT COUNT(*) FROM products)
+				db.products.find({}).count()
+			=> V2 (SELECT * FROM products LIMIT 4)
+				db.products.find({}).limit(4)
+			=> V3 (SELECT * FROM products OFFSET 4)
+				db.products.find({}).skip(2).limit(4)
+			=> V4 (SELECT * FROM products ORDER BY category ASC, name DESC)
+				db.products.find({}).sort({
+					category: 1,
+					name: -1
+				}).limit(4)
+	=> Update Function
+		Operator												Description
+		updateOne()												Update 1 Document
+		updateMany()											Update Many Document
+		replaceOne()											Update 1 Document To New Document
+
+		=> Example Query
+			=> V1
+				db.customer.<operator>(
+					{}, // Filter
+					{}, // Update
+					{}  // options
+				)
+			=> V2 (UPDATE products SET category = "food" WHERE _id = 1)
+				db.products.updateOne({
+					_id: 2
+				}, {
+					$set: {
+						category: 'food'
+					}
+				})
+			=> V3 (UPDATE products SET tags = ["food"] WHERE category = "food" AND tags IS NULL)
+				db.products.updateMany({
+					$and: [
+						{
+							category: {
+								$eq: 'food'
+							}
+						},
+						{
+							tags: {
+								$exists: false
+							}
+						}
+					]
+				}, {
+					$set: {
+						tags: ['food']
+					}
+				})
+			=> V4 (REPLACE document WITH _id 9)
+				db.products.replaceOne({
+					_id: 9
+				}, {
+					name: 'Adidas Sepatu Lari Pria',
+					price: new NumberLong("1100000"),
+					category: "shoes",
+					tags: [
+						'adidas', 'shoes', 'running'
+					]
+				})
+	=> Update Document Function
+		Operator												Description
+		$set													Change Value Field
+		$unset													Delete Field In Document
+		$rename													Change Field Document Name
+		$inc													Up Value Number Field (Increment)
+		$currentDate											Change Field To TIme
+
+		=> Query Example
+			=> V1 (UPDATE products SET stock = 0)
+				db.products.updateMany({}, {
+					$set: {
+						stock: 0
+					}
+				})
+			=> V2 (UPDATE products SET stock = stock + 0)
+				db.products.updateMany({}, {
+					$inc: {
+						stock: 10
+					}
+				})
+			=> V3 (ALTER TABLE customers CHANGE name full_name)
+				db.customers.updateMany({}, {
+					$rename: {
+						name: 'full_name'
+					}
+				})
+			=> V4 (UPDATE customers SET wrong = 'Ups')
+				db.customers.updateMany({}, {
+					$set: {
+						wrong: 'ups'
+					}
+				})
+			=> V5 (ALTER TABLE customers DROP COLUMN wrong)
+				db.customers.updateMany({}, {
+					$unset: {
+						wrong: ''
+					}
+				})
+			=> V6 (UPDATE products SET lastModifiedDate = current_date())
+				db.products.updateMany({}, {
+					$currentDate: {
+						lastModifiedDate: {
+							$type: 'date'
+						}
+					}
+				})
+	=> Array Update Operator
+		Operator												Description
+		$														Update First Data Array
+		$[]														Update All Data Array
+		$[<identifinder>]										Update All Data Array Same With Filters
+		<index>													Update Data Array With Indexes
+		$addToset												Add Value Array, Ignore If Exist
+		$pop													Delete Element -1 Or 1
+		$pull													Delete All In Array With Same Filters
+		$push													Add Element
+		$pullAll												Delete All Element
+		$each													Use In $addToset And $push, For Added Multiple Element
+		$position												Use In $push For Change Position Added
+		$slice													Use In $push Decide To Change Position
+		$sort													Use For Order After $push Operation
+
+		=> Query Example
+			=> V1 (UPDATE products SET ratings = [90, 80, 70])
+				db.products.updateMany({}, {
+					$set: {
+						ratings: [90, 80, 70]
+					}
+				})
+			=> V2 (Update First Element In Array)
+				db.products.updateMany({
+					ratings: 90
+				}, {
+					$set: {
+						'ratings.$': 100
+					}
+				})
+			=> V3 (Update All Element Of Array To 100)
+				db.products.updateMany({}, {
+					$set: {
+						'ratings.$[]': 100
+					}
+				})
+			=> V4 (UPDATE products SET ratings = [90, 80, 70])
+				db.products.updateMany({}, {
+					$set: {
+						ratings: [90, 80, 70]
+					}
+				})
+			=> V5 (Update Element Of Array Base On Array Filters)
+				db.products.updateMany({}, {
+					$set: {
+						'ratings.$[element]' : 100
+					}
+				}, {
+					arrayFilters: [
+						{
+							element: {
+								$gte: 80
+							}
+						}
+					]
+				})
+			=> V6 (Update Element Of Array With Given Index)
+				db.products.updateMany({}, {
+					$set: {
+						'ratings.0': 50,
+						'ratings.1': 60
+					}
+				})
+			=> V7 (Add "popular" To Array If Doesn't Exist)
+				db.products.updateOne({_id: 1}, {
+					$addToSet: {
+						tags: 'popular'
+					}
+				})
+			=> V8 (Remove First Element Of Array)
+				db.products.updateOne({_id: 1}, {
+					$pop: {
+						ratings: -1
+					}
+				})
+			=> V9 (Remove Last Element Of Array)
+				db.products.updateOne({_id: 2}, {
+					$pop: {
+						ratings: 1
+					}
+				})
+			=> V10 (UPDATE products SET ratings = [90, 80, 70])
+				db.products.updateMany({}, {
+					$set: {
+						ratings: [90, 80, 70]
+					}
+				})
+			=> V11 (REMOVE ALL element WHERE ratings >= 80)
+				db.products.updateMany({}, {
+					$pull: {
+						ratings: {
+							$gte: 80
+						}
+					}
+				})
+			=> V12 (Add 100 To ratings)
+				db.products.updateMany({}, {
+					$push: {
+						ratings: 100
+					}
+				})
+			=> V12 (Remove element 100)
+				db.products.updateMany({}, {
+					$pullAll: {
+						ratings: [100, 0]
+					}
+				})
+			=> V13 (Add 100, 200, 300 To ratings)
+				db.products.updateMany({}, {
+					$push: {
+						ratings: {
+							$each: [100, 200, 300]
+						}
+					}
+				})
+			=> V14 (Add trending, popular, To tags)
+				db.products.updateMany({}, {
+					$addToSet: {
+						tags: {
+							$each: ['trending', 'popular']
+						}
+					}
+				})
+			=> V15 (Add hot In Position 1)
+				db.products.updateMany({}, {
+					$push: {
+						tags: {
+							$each: ['hot'],
+							$position: 1
+						}
+					}
+				})
+			=> V16 (Add element, And Sort DESC)
+				db.products.updateMany({}, {
+					$push: {
+						ratings: {
+							$each: [100, 200, 300, 400, 500],
+							$sort: -1
+						}
+					}
+				})
+			=> V16 (Add All Element, But Limit With slice from behind)
+				db.products.updateMany({}, {
+					$push: {
+						ratings: {
+							$each: [100, 200, 300, 400, 500],
+							$slice: 3,
+						}
+					}
+				})
+	=> Delete Document
+		Operator												Description
+		db.<collection>.deleteOne(<query>)						Delete 1 Document
+		db.<collection>.deleteMany(<query>)						Delete Many With Filters
+
+		=> Query Example
+			=> V1 (Delete Document By _id)
+				db.customers.deleteOne({
+					_id: "spammer"
+				})
+
+			=> V2 (Delete Many Document)
+				db.customers.deleteMany({
+					_id: {
+						$regex: "spammer"
+					}
+				})
+	=> Bulk Write Function
+		Operator												Description
+		db.<collection>.insertMany()							Insert A Lot Of Data
+		db.<collection>.updatetMany()							Update A Lot Of Data
+		db.<collection>.deletetMany()							Delete A Lot Of Data
+		db.<collection>.bulkWrite()								Do Operation (Insert, Update, Delete) Same Times
+
+		=> Query Example
+			db.customers.bulkWrite([
+				{
+					insertOne: {
+						document: {
+							_id: "ray",
+							full_name: "wandi"
+						}
+					}
+				},
+				{
+					insertOne: {
+						document: {
+							_id: "kurniawan",
+							full_name: "Kurniawan"
+						}
+					}
+				},
+				{
+					updateMany: {
+						filter: {
+							_id: {
+								$in: ['wandi', 'marselana', 'rayandra']
+							}
+						},
+						update: {
+							$set: {
+								full_name: 'Wandi Rayandra'
+							}
+						}
+					}
+				}
+			])
+	=> Indexes (Find Data Faster (Same Index In SQL With B-TREE))
+		Operator												Description
+		db.<collection>.createIndex()							Create Index
+		db.<collection>.getIndex()								See All Index
+		db.<collection>.dropIndex()								Delete Index
+
+		=> Query Example
+			=> V1
+				db.customers.getIndexes()
+			=> V2
+				db.products.createIndex({
+					category: 1 // 1 For ASC
+				})
+			=> V3
+				db.products.dropIndex("category_1")
+			=> V4 (Debug Index)
+				- .explain() Indentity For Using Index
+
+				db.products.find({
+					category: 'food'
+				}).explain()
+			=> V5 (With Sort)
+				db.products.find({
+					category: 'food'
+				}).sort({
+					category:1
+				}).explain()
+			=> V6 (Compound Index)
+				db.products.find({
+					stock: 10,
+					tags: "popular"
+				}).explain()
+			=> V7 (Create Text Index Same Like regex But Faster)
+				db.products.createIndex({
+					name: 'text',
+					category: 'text',
+					tags: 'text'
+				}, {
+					weights:{
+						name: 10, // Bobot, If Bigger It Will Come To Priority
+						category: 5,
+						tags: 1
+					}
+				})
+
+				=> Using V1 (Find mie In name, category, tags)
+					db.products.find({
+						$text: {
+							$search: 'mie'
+						}
+					})
+				=> Using V2 (Find mie OR laptop In name, category, tags)
+					db.products.find({
+						$text: {
+							$search: 'mie laptop'
+						}
+					})
+				=> Using V3 (Find mie AND sedap In name, category, tags)
+					db.products.find({
+						$text: {
+							$search: '"mie sedap"'
+						}
+					})
+				=> Using V4 (Find mie Without sedap In name, category, tags)
+					db.products.find({
+						$text: {
+							$search: 'mie -sedap'
+						}
+					})
+	=> Index Properties (Added Option To Index)
+		=> Query Example
+			=> V1 (Create Season And Will Delete Every 60 Second If Session Expire (TTL (Time To Live)))
+				db.createCollection("sessions");
+				// Create TTL Index
+				db.sessions.createIndex({
+					createdAt: 1
+				}, {
+					expireAfterSeconds: 10
+				})
+				// Will Expire after 10 Second, But In Background Run In Every 60 Second
+				db.sessions.insertOne({
+					_id: 1,
+					session: "Session 1",
+					createdAt: new Date()
+				})
+			=> V2 (Unique Index, Field email Doesn't Have Same Value)
+				db.customers.createIndex({
+					email: 1
+				}, {
+					unique: true,
+					sparse: true
+				})
+			=> V3 (Case Insensitive)
+				db.customers.createIndex({
+					full_name: 1
+				}, {
+					collation: {
+						locale: 'en',
+						strength: 2 // 1 = Case Sensitive
+					}
+				})
+
+				db.customers.find({
+					full_name : "rayandra Wandi Marselana"
+				}).collation({
+					locale: 'en',
+					strength: 2
+				});
+	=> Security
+		As Default MongoDB Doesn't Have Authorization Therefor Must Activate Fiture "Access Control" In MongoDB To Have Authorization
+
+		=> Steps
+			=> Switch To Database admin
+				use admin
+			=> Create Admin User
+				db.createUser({
+					user: 'mongo',
+					pwd: 'mongo',
+					roles: [
+						'userAdminAnyDatabase',
+						'readWriteAnyDatabase'
+					]
+				})
+			=> Run With Security
+				mongod --auth --dbpath "C:\Users\mwand\OneDrive\Desktop\MY PROGRAM\Learn-Mongo-DB\data"
+			=> Run MongoDB (Mongo Shell)
+				mongosh "mongod://mongo:mongo@localhost:27017/learn?authSource=admin"\
+				
+				=> In First Setting Connection
+				mongodb://mongo:mongo@localhost:27017/learn?authSource=admin
+	=> User Function
+		Function												Description
+		db.createUser()											Create User
+		db.getUsers()											Get All Users
+		db.dropUser()											Delete Users
+		db.updateUser()											Update Users
+		db.changeUserPassword()									Change Password Users
+
+		=> Query Example
+			=> V1 (Get All Users)
+				db.getUsers()
+			=> V2 (Change Password User)
+				db.changeUserPassword('contoh', 'rahasia')
+			=> V3 (Drop/Delete User)
+				db.dropUser("contoh")
+			=> V4 (Update User)
+				db.updateUser("contoh2", {
+					roles: [
+						{
+							role: 'readWrite',
+							db: 'test'
+						},
+						{
+							role: 'readWrite',
+							db: 'belajar'
+						}
+					]
+				})
+	=> Database Roles
+		Function												Description
+		read													Can Read
+		readWrite												Can Read & Change
+		dbAdmin													Can All
+		userAdmin												Can Create User & Role
+		dbOwner													Combine From readWrite, dbAdmin, userAdmin
+		readAnyDatabase											Like read, But All Database
+		readWriteAnyDatabase									Like readWrite, But All Database
+		userAdminAnyDatabase									Like userAdmin, But All Database
+		dbAdminAnyDatabase										Like dbAdmin, But All Database
+		backup													Do Backup Database
+		restore													Do Restore Database
+		root													Do Anything
+
+		=> Query Example
+			First Time Must Use Table Admin
+
+			use admin
+			=> V1 (Create User With Access Read Only)
+				db.createUser({
+					user: 'contoh',
+					pwd: 'contoh',
+					roles: [
+						{
+							role: 'read',
+							db: 'test'
+						}
+					]
+				})
+			=> V2 (Create User With Access Read Write)
+				db.createUser({
+					user: 'contoh2',
+					pwd: 'contoh2',
+					roles: [
+						{
+							role: 'readWrite',
+							db: 'test'
+						}
+					]
+				})
+	=> Custom Role
+		See In Documentation For Complete
+
+		Role													Description
+		db.createRole()											Create Role
+		db.getRoles()											Get Role
+		db.deleteRoles()										Delete Role
+		db.updateRoles()										Update Role
+
+		=> Query Example
+			=> V1 (Create Role With Custom Privileges)
+				db.createRole({
+					role: 'session_management',
+					roles: [
+						{
+							role: 'read',
+							db: 'belajar'
+						}
+					],
+					privileges: [
+						{
+							resource: {
+								db: "belajar",
+								collection: "sessions"
+							},
+							actions: ["insert"]
+						}
+					]
+				})
+			=> V2 (Show All Role Privileges)
+				db.getRoles({
+					showPrivileges: true
+				})
+			=> V3 (Create Role With Custom Role)
+				db.createUser({
+					user: 'lele',
+					pwd: 'lele',
+					roles: ['session_management']
+				})
+	=> Backup
+		Using Another Tool MongoDB Is "MongoDB Comand Line Database Tools"
+
+		=> Example
+			=> Binary (All)
+				bin/mongodump --uri="mongodb://mongo:mongo@localhost:27017/learn?authSource=admin" --out=<Where Folder Will Save>
+			=> Per Collection
+				bin/mongoexport --uri="mongodb://mongo:mongo@localhost:27017/belajar?authSource=admin" --collection="customers" --out=customers.json
+	=> Restore
+		=> Example
+			=> Binary (All)
+				bin/mongorestore --uri="mongodb://mongo:mongo@localhost:27017/belajar_restore?authSource=admin" --dir=backup-dump/belajar
+			=> Per Collection
+				bin/mongoimport --uri="mongodb://mongo:mongo@localhost:27017/belajar_import?authSource=admin" --collection="customers" --file=customers.json
